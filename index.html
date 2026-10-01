@@ -977,9 +977,18 @@ async function dismissSubmission(subId) {
   catch(e) { alert('Failed to dismiss: ' + e.message); }
 }
 let appStarted = false;
+// MasterBus app access: add the logged-in user to this app's guest list (public.join_app).
+// supabaseClient.rpc defaults to the public schema and sends the user's session token.
+async function joinAppAccess() {
+  try {
+    const { error } = await supabaseClient.rpc('join_app', { p_app: 'song_vault' });
+    if(error) console.warn('join_app failed:', error.message);
+  } catch(e) { console.warn('join_app failed:', e.message); }
+}
 async function startApp() {
   if(appStarted) return; appStarted = true;
   document.getElementById('authOverlay').style.display = 'none';
+  await joinAppAccess();
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
   loadWriters().then(() => loadSongsFromSupabase());
