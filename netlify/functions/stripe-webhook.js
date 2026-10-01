@@ -37,6 +37,23 @@ async function stripeGet(path) {
   return res.json();
 }
 
+// Reads a Supabase response. On a non-2xx status, logs the body and throws
+// so the handler returns 500 and Stripe retries the event.
+async function readSupabase(res, label) {
+  const text = await res.text();
+  if (!res.ok) {
+    console.error(`Supabase ${label} failed: ${res.status} ${text}`);
+    throw new Error(`Supabase ${label} failed: ${res.status}`);
+  }
+  if (!text) return [];
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error(`Supabase ${label} returned non-JSON body: ${text}`);
+    throw new Error(`Supabase ${label} returned non-JSON body`);
+  }
+}
+
 async function supabaseUpsertSubscription(userId, fields) {
   const headers = {
     'apikey': SUPABASE_SERVICE_ROLE_KEY,
@@ -50,16 +67,17 @@ async function supabaseUpsertSubscription(userId, fields) {
     headers: { ...headers, 'Prefer': 'return=representation' },
     body: JSON.stringify(fields)
   });
-  const patched = await patchRes.json();
+  const patched = await readSupabase(patchRes, 'PATCH subscriptions');
   if (Array.isArray(patched) && patched.length > 0) return patched[0];
-  // No existing row (shouldn't normally happen since the app bootstraps one on login,
-  // but this makes the webhook self-sufficient as a fallback per the blueprint).
+
+  // No existing row. The webhook is the only thing that creates rows,
+  // so this insert is the normal path for a first-time subscriber.
   const insertRes = await fetch(`${SUPABASE_URL}/subscriptions`, {
     method: 'POST',
     headers: { ...headers, 'Prefer': 'return=representation' },
     body: JSON.stringify({ user_id: userId, ...fields })
   });
-  const inserted = await insertRes.json();
+  const inserted = await readSupabase(insertRes, 'POST subscriptions');
   return Array.isArray(inserted) ? inserted[0] : inserted;
 }
 
@@ -71,7 +89,7 @@ async function supabaseFindBySubscriptionId(stripeSubscriptionId) {
       'Accept-Profile': 'song_vault'
     }
   });
-  const rows = await res.json();
+  const rows = await readSupabase(res, 'SELECT subscriptions');
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
