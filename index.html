@@ -276,9 +276,6 @@ async function submitAuth() {
       </div>
       <div id="pendingSubmissionsList"></div>
     </div>
-    <div style="margin-bottom:16px;">
-      <button class="btn gold" style="width:100%;padding:14px 20px;font-size:15px;font-weight:600;letter-spacing:0.3px;" onclick="syncFromSheet()" title="Pull latest co-writer responses from your Google Sheet">&#8635; Sync Co-Writer Info from Spreadsheet</button>
-    </div>
     <div id="songsList"></div>
     <div id="emptyVault" class="empty"><div class="empty-icon">&#9834;</div>No songs yet. Add your first to get started.</div>
   </div>
@@ -341,15 +338,6 @@ async function submitAuth() {
   <div id="cowriters" class="section">
     <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
     <div class="page-header"><div><div class="page-title">Co-writer Outreach</div><div class="page-sub">Send a link &mdash; they fill in their own info</div></div></div>
-    <div class="method-pills" style="margin-bottom:1rem;">
-      <button class="mpill active" id="linkModeSheetBtn" onclick="setOutreachLinkMode('sheet')">Google Form</button>
-      <button class="mpill" id="linkModeAppBtn" onclick="setOutreachLinkMode('app')">In-App Form (Beta)</button>
-    </div>
-    <div class="form-url-banner">
-      <div class="form-url-label">Your Google Form URL:</div>
-      <input type="text" id="formUrl" placeholder="Paste your Google Form link here..." oninput="saveFormUrl()">
-      <button class="btn" style="flex-shrink:0;" onclick="document.getElementById('formUrl').value='';saveFormUrl()">Clear</button>
-    </div>
     <div class="card">
       <div class="card-title">Select Song</div>
       <select id="outreachSongPicker" style="width:100%;padding:9px 12px;border:1px solid var(--border-strong);border-radius:var(--radius);background:var(--cream);color:var(--ink);font-size:13px;font-family:'DM Sans',sans-serif;" onchange="renderOutreach()"><option value="">Choose a song...</option></select>
@@ -359,7 +347,7 @@ async function submitAuth() {
       <div class="card" style="margin-top:0.5rem;">
         <div class="card-title">General Shareable Link</div>
         <div class="link-box"><span id="globalLink">&mdash;</span><button class="btn" style="flex-shrink:0;padding:6px 12px;font-size:12px;" onclick="copyText(document.getElementById('globalLink').textContent,this)">Copy</button></div>
-        <p class="hint">Share this link via text, email, DM, or any channel. Co-writers fill out their own info and it goes straight into whichever system is selected above &mdash; Google Sheet, or directly into your vault's Pending Submissions.</p>
+        <p class="hint">Share this link via text, email, DM, or any channel. Co-writers fill out their own info and it goes straight into your vault's Pending Submissions.</p>
       </div>
     </div>
     <div id="outreachEmpty" class="empty"><div class="empty-icon">&#9993;</div>Select a song above to manage outreach.</div>
@@ -412,7 +400,7 @@ async function submitAuth() {
   </div>
   <div id="settings" class="section">
     <a class="back-link" onclick="showTab('vault')">&larr; Back to Song Vault</a>
-    <div class="page-header"><div><div class="page-title">Settings &amp; Sync</div><div class="page-sub">Connect your Google Sheet to pull co-writer responses</div></div></div>
+    <div class="page-header"><div><div class="page-title">Settings &amp; Sync</div><div class="page-sub">Your info, subscription and backups</div></div></div>
     <div class="card">
       <div class="card-title">&#9729; Supabase Database</div>
       <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Your songs are stored permanently in Supabase &mdash; no more cache worries. Data loads automatically on startup and saves on every song entry.</p>
@@ -464,51 +452,6 @@ async function submitAuth() {
       </div>
       <p class="hint" style="margin-top:10px;">Export saves a <code>.json</code> file to your Downloads. Import merges it back in &mdash; your local data always wins in conflicts.</p>
     </div>
-    <div class="card">
-      <div class="card-title">Google Sheets Connection</div>
-      <div class="field-grid">
-        <div class="field full-width"><label>Google Sheet ID</label><input type="text" id="sheetId" placeholder="e.g. 18wjPuoozuLmy0Z4BfMqk2HKkhqj87zgfr6XTSKOiqyo" oninput="saveSettings()"><span class="hint">Found in your Sheet's URL: docs.google.com/spreadsheets/d/<strong>[THIS PART]</strong>/edit</span></div>
-        <div class="field full-width"><label>Google Sheets API Key</label><input type="password" id="apiKey" placeholder="Paste your API key here" oninput="saveSettings()"><span class="hint">Free from Google Cloud Console &mdash; see setup instructions below.</span></div>
-        <div class="field"><label>Sheet Tab Name</label><input type="text" id="sheetTab" placeholder="Form Responses 1" oninput="saveSettings()"><span class="hint">The tab name in your spreadsheet (default: "Form Responses 1")</span></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn gold" onclick="syncFromSheet()">&#8635; Sync from Sheet now</button>
-        <button class="btn" onclick="testConnection()">Test connection</button>
-      </div>
-      <div id="syncStatus" style="margin-top:12px;font-size:13px;display:none;padding:10px 14px;border-radius:var(--radius);"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Column Mapping</div>
-      <p style="font-size:13px;color:var(--ink-light);margin-bottom:1rem;line-height:1.6;">Tell the hub which column in your sheet contains each piece of data. Use the column letter (A, B, C...) or header name exactly as it appears in your sheet.</p>
-      <div class="field-grid">
-        <div class="field"><label>Song Title column</label><input type="text" id="col_song" placeholder="Song Title" oninput="saveSettings()"></div>
-        <div class="field"><label>Writer Name column</label><input type="text" id="col_name" placeholder="Your legal name" oninput="saveSettings()"></div>
-        <div class="field"><label>IPI / CAE column</label><input type="text" id="col_ipi" placeholder="IPI / CAE number" oninput="saveSettings()"></div>
-        <div class="field"><label>PRO column</label><input type="text" id="col_pro" placeholder="Your PRO" oninput="saveSettings()"></div>
-        <div class="field"><label>Share % column</label><input type="text" id="col_pct" placeholder="Agreed share %" oninput="saveSettings()"></div>
-        <div class="field"><label>Publisher Name column</label><input type="text" id="col_pub" placeholder="Publisher name" oninput="saveSettings()"></div>
-        <div class="field"><label>Publisher IPI column</label><input type="text" id="col_pub_ipi" placeholder="Publisher IPI" oninput="saveSettings()"></div>
-        <div class="field"><label>Publisher PRO column</label><input type="text" id="col_pub_pro" placeholder="Publisher PRO" oninput="saveSettings()"></div>
-        <div class="field"><label>Publisher Share % column</label><input type="text" id="col_pub_pct" placeholder="Publisher Share %" oninput="saveSettings()"></div>
-        <div class="field"><label>Email column</label><input type="text" id="col_email" placeholder="Your email" oninput="saveSettings()"></div>
-        <div class="field"><label>Phone column</label><input type="text" id="col_phone" placeholder="Your phone" oninput="saveSettings()"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">How to get a free API Key (5 min)</div>
-      <ol style="font-size:13px;color:var(--ink-light);line-height:2;padding-left:1.25rem;">
-        <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--gold);">console.cloud.google.com</a> and sign in with your Google account</li>
-        <li>Click <strong>Select a project</strong> &rarr; <strong>New Project</strong> &rarr; name it anything &rarr; Create</li>
-        <li>In the search bar type <strong>Google Sheets API</strong> &rarr; click it &rarr; click <strong>Enable</strong></li>
-        <li>Go to <strong>APIs &amp; Services &rarr; Credentials &rarr; + Create Credentials &rarr; API Key</strong></li>
-        <li>Copy the key and paste it above. That's it &mdash; it's free and never expires.</li>
-        <li><strong>Important:</strong> Make sure your Google Sheet is set to <em>"Anyone with the link can view"</em></li>
-      </ol>
-    </div>
-    <div class="card">
-      <div class="card-title">Sync Log</div>
-      <div id="syncLog" style="background:var(--ink);color:var(--gold-light);border-radius:var(--radius-lg);padding:1rem;font-size:12px;font-family:'DM Mono',monospace;line-height:1.8;min-height:80px;max-height:200px;overflow-y:auto;">No syncs run yet.</div>
-    </div>
   </div>
 </main>
 <script>
@@ -532,15 +475,6 @@ async function signOutUser() {
   currentUser = null; currentSession = null;
   document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
   document.getElementById('authOverlay').style.display = 'flex';
-}
-const FORM_ENTRY_SONG_TITLE = 'entry.2040953874';
-function getPrefilledFormLink(songTitle) {
-  const baseUrl = getFormUrl(); if(!baseUrl || baseUrl === 'https://your-google-form-link-here') return null;
-  const base = baseUrl.split('?')[0]; return `${base}?usp=pp_url&${FORM_ENTRY_SONG_TITLE}=${encodeURIComponent(songTitle)}`;
-}
-function copyPrefilledLink(songTitle, btn) {
-  const link = getPrefilledFormLink(songTitle); if(!link) { showToast('Add your Google Form URL in Co-writer Outreach first', 'error'); return; }
-  navigator.clipboard.writeText(link).then(() => { const orig = btn.textContent; btn.textContent = '✓ Copied!'; btn.style.background = '#EAF3E4'; btn.style.borderColor = '#C2DDB8'; btn.style.color = 'var(--sage)'; setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = ''; }, 2000); });
 }
 async function supaFetch(path, options={}) {
   const res = await fetch(`${SUPA_URL}${path}`, { ...options, headers: supaHeaders(options.headers||{}) });
@@ -598,30 +532,28 @@ async function addWriter_() {
   try { const result = await supaFetch('/writers', { method: 'POST', body: JSON.stringify({ name, ipi: document.getElementById('newWriterIpi').value.trim(), pro: document.getElementById('newWriterPro').value, sesac_account: document.getElementById('newWriterSesac').value.trim(), user_id: currentUser?.id || null }) }); document.getElementById('addWriterPanel').style.display = 'none'; ['newWriterName','newWriterIpi','newWriterSesac'].forEach(id => document.getElementById(id).value = ''); document.getElementById('newWriterPro').value = ''; await loadWriters(); if(result && result[0]) { document.getElementById('writerPicker').value = result[0].id; await switchWriter(result[0].id); } showToast(`✓ ${name} added`); }
   catch(e) { alert('Failed to add writer: ' + e.message); }
 }
-function getAllSettingsFromForm() { return { form_url: document.getElementById('formUrl')?.value||'', sheet_id: document.getElementById('sheetId')?.value||'', api_key: document.getElementById('apiKey')?.value||'', sheet_tab: document.getElementById('sheetTab')?.value||'Form Responses 1', col_song: document.getElementById('col_song')?.value||'Song Title', col_name: document.getElementById('col_name')?.value||'Your legal name', col_ipi: document.getElementById('col_ipi')?.value||'IPI / CAE number', col_pro: document.getElementById('col_pro')?.value||'Your PRO', col_pct: document.getElementById('col_pct')?.value||'Agreed share %', col_pub: document.getElementById('col_pub')?.value||'Publisher name', col_pub_ipi: document.getElementById('col_pub_ipi')?.value||'Publisher IPI', col_pub_pro: document.getElementById('col_pub_pro')?.value||'Publisher PRO', col_pub_pct: document.getElementById('col_pub_pct')?.value||'Publisher Share %', col_email: document.getElementById('col_email')?.value||'Your email', col_phone: document.getElementById('col_phone')?.value||'Your phone', my_name: document.getElementById('my_name')?.value||'', my_ipi: document.getElementById('my_ipi')?.value||'', my_pro: document.getElementById('my_pro')?.value||'', my_pct: document.getElementById('my_pct')?.value||'', my_pub_name: document.getElementById('my_pub_name')?.value||'', my_pub_ipi: document.getElementById('my_pub_ipi')?.value||'', my_pub_pro: document.getElementById('my_pub_pro')?.value||'', my_genre: document.getElementById('my_genre')?.value||'', my_language: document.getElementById('my_language')?.value||'English', my_distributor: document.getElementById('my_distributor')?.value||'', my_label: document.getElementById('my_label')?.value||'', my_artist: document.getElementById('my_artist')?.value||'', my_sesac_account: document.getElementById('my_sesac_account')?.value||'', updated_at: new Date().toISOString() }; }
+function getAllSettingsFromForm() { return { my_name: document.getElementById('my_name')?.value||'', my_ipi: document.getElementById('my_ipi')?.value||'', my_pro: document.getElementById('my_pro')?.value||'', my_pct: document.getElementById('my_pct')?.value||'', my_pub_name: document.getElementById('my_pub_name')?.value||'', my_pub_ipi: document.getElementById('my_pub_ipi')?.value||'', my_pub_pro: document.getElementById('my_pub_pro')?.value||'', my_genre: document.getElementById('my_genre')?.value||'', my_language: document.getElementById('my_language')?.value||'English', my_distributor: document.getElementById('my_distributor')?.value||'', my_label: document.getElementById('my_label')?.value||'', my_artist: document.getElementById('my_artist')?.value||'', my_sesac_account: document.getElementById('my_sesac_account')?.value||'', updated_at: new Date().toISOString() }; }
 async function saveAllSettings() {
-  const s = getAllSettingsFromForm(); localStorage.setItem('srh_settings', JSON.stringify(s)); localStorage.setItem('srh_myinfo', JSON.stringify({ name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, pct: s.my_pct, pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro, genre: s.my_genre, language: s.my_language, distributor: s.my_distributor, label: s.my_label, artist: s.my_artist, sesac_account: s.my_sesac_account })); localStorage.setItem('srh_formUrl', s.form_url);
+  const s = getAllSettingsFromForm(); localStorage.setItem('srh_settings', JSON.stringify(s)); localStorage.setItem('srh_myinfo', JSON.stringify({ name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, pct: s.my_pct, pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro, genre: s.my_genre, language: s.my_language, distributor: s.my_distributor, label: s.my_label, artist: s.my_artist, sesac_account: s.my_sesac_account })); 
   try { const patched = await supaFetch(`/settings?user_id=eq.${currentUser.id}`, { method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(s) }); if(!patched || !patched.length) { await supaFetch('/settings', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ ...s, user_id: currentUser.id }) }); } } catch(e) { console.warn('Settings save to Supabase failed:', e.message); }
   if(activeWriterId) { try { await supaFetch(`/writers?id=eq.${activeWriterId}`, { method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, sesac_account: s.my_sesac_account, pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro, genre: s.my_genre, language: s.my_language, distributor: s.my_distributor, label: s.my_label, artist: s.my_artist }) }); const idx = writersList.findIndex(w => w.id === activeWriterId); if(idx >= 0) writersList[idx] = { ...writersList[idx], name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, sesac_account: s.my_sesac_account }; const picker = document.getElementById('writerPicker'); if(picker) { picker.innerHTML = writersList.map(w => `<option value="${w.id}">${w.name}</option>`).join(''); picker.value = activeWriterId; } } catch(e) { console.warn('Writer profile save failed:', e.message); } }
 }
 async function loadAllSettings() {
-  let s = {}; try { const rows = await supaFetch(`/settings?user_id=eq.${currentUser.id}&limit=1`); if(rows && rows[0]) { s = rows[0]; localStorage.setItem('srh_settings', JSON.stringify(s)); localStorage.setItem('srh_formUrl', s.form_url||''); } } catch(e) { console.warn('Settings load from Supabase failed, using local:', e.message); s = JSON.parse(localStorage.getItem('srh_settings') || '{}'); }
+  let s = {}; try { const rows = await supaFetch(`/settings?user_id=eq.${currentUser.id}&limit=1`); if(rows && rows[0]) { s = rows[0]; localStorage.setItem('srh_settings', JSON.stringify(s));  } } catch(e) { console.warn('Settings load from Supabase failed, using local:', e.message); s = JSON.parse(localStorage.getItem('srh_settings') || '{}'); }
   const writer = writersList.find(w => w.id === activeWriterId); if(writer) { s.my_name=writer.name||s.my_name; s.my_ipi=writer.ipi||s.my_ipi; s.my_pro=writer.pro||s.my_pro; s.my_sesac_account=writer.sesac_account||s.my_sesac_account; s.my_pub_name=writer.pub_name||s.my_pub_name; s.my_pub_ipi=writer.pub_ipi||s.my_pub_ipi; s.my_pub_pro=writer.pub_pro||s.my_pub_pro; s.my_genre=writer.genre||s.my_genre; s.my_language=writer.language||s.my_language; s.my_distributor=writer.distributor||s.my_distributor; s.my_label=writer.label||s.my_label; s.my_artist=writer.artist||s.my_artist; }
   applySettingsToForm(s); return s;
 }
 function applySettingsToForm(s) {
   const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
-  set('formUrl', s.form_url); set('sheetId', s.sheet_id); set('apiKey', s.api_key); set('sheetTab', s.sheet_tab||'Form Responses 1'); set('col_song', s.col_song||'Song Title'); set('col_name', s.col_name||'Your legal name'); set('col_ipi', s.col_ipi||'IPI / CAE number'); set('col_pro', s.col_pro||'Your PRO'); set('col_pct', s.col_pct||'Agreed share %'); set('col_pub', s.col_pub||'Publisher name'); set('col_pub_ipi', s.col_pub_ipi||'Publisher IPI'); set('col_pub_pro', s.col_pub_pro||'Publisher PRO'); set('col_pub_pct', s.col_pub_pct||'Publisher Share %'); set('col_email', s.col_email||'Your email'); set('col_phone', s.col_phone||'Your phone'); set('my_name', s.my_name); set('my_ipi', s.my_ipi); set('my_pro', s.my_pro); set('my_pct', s.my_pct); set('my_pub_name', s.my_pub_name); set('my_pub_ipi', s.my_pub_ipi); set('my_pub_pro', s.my_pub_pro); set('my_genre', s.my_genre); set('my_language', s.my_language||'English'); set('my_distributor', s.my_distributor); set('my_label', s.my_label); set('my_artist', s.my_artist); set('my_sesac_account', s.my_sesac_account);
+  set('my_name', s.my_name); set('my_ipi', s.my_ipi); set('my_pro', s.my_pro); set('my_pct', s.my_pct); set('my_pub_name', s.my_pub_name); set('my_pub_ipi', s.my_pub_ipi); set('my_pub_pro', s.my_pub_pro); set('my_genre', s.my_genre); set('my_language', s.my_language||'English'); set('my_distributor', s.my_distributor); set('my_label', s.my_label); set('my_artist', s.my_artist); set('my_sesac_account', s.my_sesac_account);
 }
-function saveFormUrl() { saveAllSettings(); } function loadFormUrl() { return document.getElementById('formUrl')?.value || ''; } function getFormUrl() { return document.getElementById('formUrl')?.value?.trim() || 'https://your-google-form-link-here'; }
 function saveSettings() { saveAllSettings(); } function loadSettings() { loadAllSettings(); }
-function getSettings() { const s = JSON.parse(localStorage.getItem('srh_settings') || '{}'); const sheetIdEl = document.getElementById('sheetId'); const apiKeyEl = document.getElementById('apiKey'); const sheetTabEl = document.getElementById('sheetTab'); if(sheetIdEl && sheetIdEl.value) s.sheet_id = sheetIdEl.value; if(apiKeyEl && apiKeyEl.value) s.api_key = apiKeyEl.value; if(sheetTabEl && sheetTabEl.value) s.sheet_tab = sheetTabEl.value; return s; }
 function saveMyInfo() { saveAllSettings(); } function loadMyInfo() { applySettingsToForm(JSON.parse(localStorage.getItem('srh_settings') || '{}')); }
 function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings') || '{}'); return { name: s.my_name||'', ipi: s.my_ipi||'', pro: s.my_pro||'', pct: s.my_pct||'', pub_name: s.my_pub_name||'', pub_ipi: s.my_pub_ipi||'', pub_pro: s.my_pub_pro||'', genre: s.my_genre||'', language: s.my_language||'English', distributor: s.my_distributor||'', label: s.my_label||'', artist: s.my_artist||'', sesac_account: s.my_sesac_account||'' }; }
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
-  if(t==='vault') { renderVault(); loadPendingSubmissions(); } if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { loadFormUrl(); populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
+  if(t==='vault') { renderVault(); loadPendingSubmissions(); } if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row'; const pctManual = data && data.pct ? '1' : '0';
@@ -659,43 +591,8 @@ function calcPubPct() { const vals = [...document.querySelectorAll('.p-pct')].ma
 function openSms(href) { const idx = document.getElementById('outreachSongPicker').value; const iframe = document.createElement('iframe'); iframe.style.display = 'none'; iframe.src = href; document.body.appendChild(iframe); setTimeout(() => { document.body.removeChild(iframe); document.getElementById('outreachSongPicker').value = idx; renderOutreach(); }, 1000); }
 function openGmail(key) { const href = window._gmailLinks && window._gmailLinks[key]; if(href) window.open(href, '_blank'); }
 function showToast(msg, type='success') { const toast = document.getElementById('toast'); toast.textContent = msg; toast.className = `toast${type==='error'?' error':''}`; requestAnimationFrame(() => { toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 3500); }); }
-function setSyncStatus(msg, type='info') { const el = document.getElementById('syncStatus'); el.style.display = 'block'; el.textContent = msg; el.style.background = type==='success'?'#EAF3E4': type==='error'?'#FAEAE5':'var(--gold-muted)'; el.style.color = type==='success'?'var(--sage)': type==='error'?'var(--rust)':'var(--ink)'; el.style.border = type==='success'?'1px solid #C2DDB8': type==='error'?'1px solid #E8C4B8':'1px solid var(--gold)'; }
-function logSync(msg) { const log = document.getElementById('syncLog'); const ts = new Date().toLocaleTimeString(); if(log.textContent === 'No syncs run yet.') log.textContent = ''; log.textContent += `[${ts}] ${msg}\n`; log.scrollTop = log.scrollHeight; }
-async function testConnection() { const cfg = getSettings(); if(!cfg.sheet_id || !cfg.api_key) { setSyncStatus('Please enter both a Sheet ID and API Key first.', 'error'); return; } setSyncStatus('Testing connection...', 'info'); try { const tab = encodeURIComponent(cfg.sheet_tab || 'Form Responses 1'); const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheet_id}/values/${tab}!A1:A1?key=${cfg.api_key}`; const res = await fetch(url); if(res.ok) { setSyncStatus('✓ Connection successful! Sheet is reachable.', 'success'); logSync('Connection test passed.'); } else { const err = await res.json(); setSyncStatus(`Connection failed: ${err.error?.message || res.status}`, 'error'); } } catch(e) { setSyncStatus(`Connection error: ${e.message}`, 'error'); } }
-async function syncFromSheet() {
-  const cfg = getSettings(); if(!cfg.sheet_id || !cfg.api_key) { setSyncStatus('Go to ⚙ Settings & Sync to add your Sheet ID and API Key first.', 'error'); showToast('Please add Sheet ID and API Key in Settings first.', 'error'); showTab('settings'); return; }
-  document.querySelectorAll('[onclick="syncFromSheet()"]').forEach(btn => { btn.dataset.orig = btn.textContent; btn.textContent = '↻ Syncing...'; btn.disabled = true; });
-  setSyncStatus('Syncing...', 'info'); logSync('Starting sync...');
-  try {
-    const tab = encodeURIComponent(cfg.sheet_tab || 'Form Responses 1'); const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheet_id}/values/${tab}?key=${cfg.api_key}`; const res = await fetch(url);
-    if(!res.ok) { const err = await res.json(); setSyncStatus(`Sync failed: ${err.error?.message}`, 'error'); logSync(`Error: ${err.error?.message}`); return; }
-    const data = await res.json(); const rows = data.values || []; if(rows.length < 2) { setSyncStatus('Sheet has no responses yet.', 'info'); logSync('No rows found.'); return; }
-    const headers = rows[0].map(h => h.trim()); const colIdx = (name) => { const exact = headers.findIndex(h => h.toLowerCase() === name.toLowerCase()); if(exact >= 0) return exact; return headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase().split(' ')[0])); };
-    const songCol=colIdx(cfg.col_song||'Song Title'), nameCol=colIdx(cfg.col_name||'legal name'), ipiCol=colIdx(cfg.col_ipi||'IPI'), proCol=colIdx(cfg.col_pro||'PRO'), pctCol=colIdx(cfg.col_pct||'share'), pubCol=colIdx(cfg.col_pub||'Publisher'), pubIpiCol=colIdx(cfg.col_pub_ipi||'Publisher IPI'), pubProCol=colIdx(cfg.col_pub_pro||'Publisher PRO'), pubPctCol=colIdx(cfg.col_pub_pct||'Publisher Share %'), emailCol=colIdx(cfg.col_email||'Your email'), phoneCol=colIdx(cfg.col_phone||'Your phone');
-    logSync(`Headers found: ${headers.join(', ')}`); logSync(`Mapped cols — Song:${songCol} Name:${nameCol} IPI:${ipiCol} PRO:${proCol} Pct:${pctCol} Pub:${pubCol} Email:${emailCol} Phone:${phoneCol}`);
-    let matched = 0, unmatched = 0;
-    rows.slice(1).forEach((row, ri) => {
-      const submittedSongTitle = (row[songCol] || '').trim().toLowerCase(); const writerName = (row[nameCol] || '').trim(); if(!submittedSongTitle || !writerName) return;
-      const songIdx = songs.findIndex(s => s.title.trim().toLowerCase() === submittedSongTitle || s.title.trim().toLowerCase().includes(submittedSongTitle) || submittedSongTitle.includes(s.title.trim().toLowerCase()));
-      if(songIdx < 0) { logSync(`Row ${ri+2}: Song "${row[songCol]}" not found in vault — skipped.`); unmatched++; return; }
-      const song = songs[songIdx]; let writerIdx = (song.writers || []).findIndex(w => w.name.toLowerCase() === writerName.toLowerCase());
-      const beforeSnapshot = JSON.stringify(song);
-      const existingWriter = writerIdx >= 0 ? song.writers[writerIdx] : null;
-      const sheetPct = pctCol>=0?(row[pctCol]||''):'';
-      const updatedWriter = { name: writerName, ipi: ipiCol>=0?(row[ipiCol]||''):'', pro: proCol>=0?(row[proCol]||''):'', pub_name: pubCol>=0?(row[pubCol]||''):'', pub_ipi: pubIpiCol>=0?(row[pubIpiCol]||''):'', pub_pro: pubProCol>=0?(row[pubProCol]||''):'' };
-      if(!(existingWriter && existingWriter.pct)) { updatedWriter.pct = sheetPct; } else if(sheetPct && sheetPct !== existingWriter.pct) { logSync(`Kept your ${existingWriter.pct}% for "${writerName}" on "${song.title}" — sheet had ${sheetPct}%, not overwritten.`); }
-      const pubName=pubCol>=0?(row[pubCol]||''):'', pubIpi=pubIpiCol>=0?(row[pubIpiCol]||''):'', pubPro=pubProCol>=0?(row[pubProCol]||''):'', pubPct=pubPctCol>=0?(row[pubPctCol]||''):'';
-      if(pubName) { if(!songs[songIdx].publishers) songs[songIdx].publishers = []; const existingPubIdx = songs[songIdx].publishers.findIndex(p => p.name.toLowerCase() === pubName.toLowerCase()); if(existingPubIdx >= 0) { const existingPub = songs[songIdx].publishers[existingPubIdx]; const pubPatch = { name: pubName, ipi: pubIpi, pro: pubPro, writer: writerName }; if(!existingPub.pct) { pubPatch.pct = pubPct; } else if(pubPct && pubPct !== existingPub.pct) { logSync(`Kept your ${existingPub.pct}% publisher share for "${pubName}" on "${song.title}" — sheet had ${pubPct}%, not overwritten.`); } songs[songIdx].publishers[existingPubIdx] = { ...existingPub, ...pubPatch }; } else { songs[songIdx].publishers.push({ name: pubName, ipi: pubIpi, pro: pubPro, pct: pubPct, writer: writerName }); } logSync(`Updated publisher "${pubName}" on "${songs[songIdx].title}"`); }
-      if(writerIdx >= 0) { songs[songIdx].writers[writerIdx] = {...songs[songIdx].writers[writerIdx], ...updatedWriter}; logSync(`Updated writer "${writerName}" on "${song.title}"`); } else { if(!songs[songIdx].writers) songs[songIdx].writers = []; songs[songIdx].writers.push(updatedWriter); logSync(`Added new writer "${writerName}" to "${song.title}"`); }
-      if(!songs[songIdx].outreach) songs[songIdx].outreach = {}; if(!songs[songIdx].outreach[writerName]) songs[songIdx].outreach[writerName] = {}; songs[songIdx].outreach[writerName].status = 'responded';
-      if(emailCol >= 0 && row[emailCol]) { songs[songIdx].outreach[writerName].email = row[emailCol].trim(); logSync(`Saved email for "${writerName}": ${row[emailCol].trim()}`); }
-      if(phoneCol >= 0 && row[phoneCol]) { songs[songIdx].outreach[writerName].phone = row[phoneCol].trim(); logSync(`Saved phone for "${writerName}": ${row[phoneCol].trim()}`); }
-      matched++; if(JSON.stringify(songs[songIdx]) !== beforeSnapshot) { saveSongToSupabase(songs[songIdx]); } else { logSync(`Row ${ri+2}: "${row[songCol]}" — already up to date, skipped.`); }
-    });
-    localStorage.setItem('srh_songs', JSON.stringify(songs)); const summary = `✓ Sync complete — ${matched} writer${matched!==1?'s':''} updated${unmatched>0?`, ${unmatched} unmatched rows`:''}`; setSyncStatus(summary, 'success'); logSync(summary); renderVault(); if(editingIndex >= 0 && document.getElementById('entry').classList.contains('active')) { loadSong(editingIndex); } showToast(summary);
-  } catch(e) { setSyncStatus(`Sync error: ${e.message}`, 'error'); logSync(`Error: ${e.message}`); showToast(`Sync error: ${e.message}`, 'error'); }
-  finally { document.querySelectorAll('[onclick="syncFromSheet()"]').forEach(btn => { btn.textContent = btn.dataset.orig || '↻ Sync from Sheet'; btn.disabled = false; }); }
-}
+function setSyncStatus(msg, type='info') { const el = document.getElementById('syncStatus'); if(!el) { showToast(msg, type==='error'?'error':'success'); return; } el.style.display = 'block'; el.textContent = msg; el.style.background = type==='success'?'#EAF3E4': type==='error'?'#FAEAE5':'var(--gold-muted)'; el.style.color = type==='success'?'var(--sage)': type==='error'?'var(--rust)':'var(--ink)'; el.style.border = type==='success'?'1px solid #C2DDB8': type==='error'?'1px solid #E8C4B8':'1px solid var(--gold)'; }
+function logSync(msg) { const log = document.getElementById('syncLog'); if(!log) return; const ts = new Date().toLocaleTimeString(); if(log.textContent === 'No syncs run yet.') log.textContent = ''; log.textContent += `[${ts}] ${msg}\n`; log.scrollTop = log.scrollHeight; }
 function largestRemainder(writers, pubRows, target=50.00, decimals=2) { const factor = Math.pow(10, decimals); const raws = writers.map((w, i) => { const pub = pubRows[i] || pubRows[0] || {}; return ((parseFloat(w.pct)||0) + (parseFloat(pub.pct)||0)) / 4; }); const floors = raws.map(r => Math.floor(r * factor) / factor); const floorSum = Math.round(floors.reduce((a,b) => a+b, 0) * factor) / factor; const remainder = Math.round((target - floorSum) * factor); const fractions = raws.map((r, i) => ({ i, frac: r * factor - Math.floor(r * factor) })); fractions.sort((a, b) => b.frac - a.frac); const result = [...floors]; for(let r = 0; r < remainder; r++) { result[fractions[r % fractions.length].i] = Math.round((result[fractions[r % fractions.length].i] + 1/factor) * factor) / factor; } return result; }
 function formatDateMMDDYYYY(dateStr) { if(!dateStr) return ''; const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return `${m[2]}/${m[3]}/${m[1]}`; return dateStr; }
 function exportMLC(songIndices) { const headers = ['PRIMARY TITLE *','MLC SONG CODE','MEMBERS SONG ID','ISWC','AKA TITLE †','AKA TITLE TYPE CODE †','WRITER LAST NAME *','WRITER FIRST NAME','WRITER IPI NUMBER','WRITER ROLE CODE *','MLC PUBLISHER NUMBER','PUBLISHER NAME *','PUBLISHER IPI NUMBER *','ADMINISTRATOR MLC PUBLISHER NUMBER','ADMINISTRATOR NAME †','ADMINISTRATOR IPI NUMBER †','COLLECTION SHARE *','RECORDING TITLE †','RECORDING ARTIST NAME †','RECORDING ISRC','RECORDING LABEL']; let toExport; if(songIndices === 'unsubmitted') { toExport = songs.filter(s => !(s.registrations||{}).mlc_submitted); if(!toExport.length){ showToast('All songs already submitted to MLC!', 'error'); return; } } else if(Array.isArray(songIndices)) { toExport = songIndices.map(i => songs[i]); } else { toExport = songs; } if(!toExport.length){ alert('No songs to export.'); return; } const rows = [headers]; toExport.forEach(song => { const writers = (song.writers || []).filter(w => w.name); const publishers = (song.publishers || []).filter(p => p.name); const mlcShares = largestRemainder(writers, publishers); writers.forEach((w, i) => { const nameParts = w.name.trim().split(' '); const firstName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''; const lastName = nameParts[0] || ''; const publisher = publishers[i] || publishers[0] || {}; const collectionShare = mlcShares[i]; const isFirstWriter = i === 0; rows.push([isFirstWriter?(song.title||''):'','','',isFirstWriter?(song.iswc||''):'',isFirstWriter&&song.altTitle?song.altTitle:'',isFirstWriter&&song.altTitle?'AT':'',lastName,firstName,w.ipi||'','CA','',publisher.name||'',publisher.ipi||'','','','',collectionShare,isFirstWriter&&song.title&&song.artist?song.title:'',isFirstWriter&&song.title&&song.artist?song.artist:'',isFirstWriter?(song.isrc||''):'',isFirstWriter?(song.label||''):'']); }); }); const doMLCExport = () => { try { const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows); XLSX.utils.book_append_sheet(wb, ws, 'Format'); XLSX.writeFile(wb, `MLC_Bulk_Works_${new Date().toISOString().slice(0,10)}.xlsx`); showToast(`✓ MLC .xlsx downloaded — ${toExport.length} song(s)`); } catch(e) { alert('Export error: ' + e.message); } }; if(typeof XLSX !== 'undefined') doMLCExport(); else { const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload=doMLCExport; document.head.appendChild(s); } }
@@ -740,7 +637,7 @@ function renderVault() {
     const leftDiv=document.createElement('div'); leftDiv.style.flex='1'; leftDiv.style.cursor='pointer'; leftDiv.onclick=()=>loadSong(i);
     leftDiv.innerHTML=`<div class="song-title-text">${s.title}</div><div class="song-meta">${s.artist||'No artist'}${s.genre?' · '+s.genre:''}</div>`;
     const rightDiv=document.createElement('div'); rightDiv.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
-    rightDiv.innerHTML=`<div class="badges">${totalCo>0?`<span class="badge ${responded===totalCo?'responded':responded>0?'invited':'pending'}">${responded}/${totalCo} co-writers</span>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><button class="btn${adminSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleAdminSubmitted(${i})">${adminSubmitted?'Admin ✓':'Mark Admin'}</button><button class="btn${sesacSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">${sesacSubmitted?'SESAC ✓':'Mark SESAC'}</button><button class="btn${mlcSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">${mlcSubmitted?'MLC ✓':'Mark MLC'}</button><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();duplicateSong(${i})">⧉ Duplicate</button><button class="btn" style="font-size:12px;padding:5px 7px;flex-shrink:0;margin-left:4px;" onclick="event.stopPropagation();copyPrefilledLink('${s.title.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)" title="Copy pre-filled form link">📋</button></div>`;
+    rightDiv.innerHTML=`<div class="badges">${totalCo>0?`<span class="badge ${responded===totalCo?'responded':responded>0?'invited':'pending'}">${responded}/${totalCo} co-writers</span>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><button class="btn${adminSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleAdminSubmitted(${i})">${adminSubmitted?'Admin ✓':'Mark Admin'}</button><button class="btn${sesacSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">${sesacSubmitted?'SESAC ✓':'Mark SESAC'}</button><button class="btn${mlcSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">${mlcSubmitted?'MLC ✓':'Mark MLC'}</button><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();duplicateSong(${i})">⧉ Duplicate</button></div>`;
     row.appendChild(leftDiv); row.appendChild(rightDiv); list.appendChild(row);
   });
 }
@@ -753,19 +650,12 @@ function getInitials(name){return(name||'?').split(' ').map(n=>n[0]).join('').to
 function formatPhoneUS(p){ const d=(p||'').replace(/\D/g,''); const ten=d.length===11&&d.startsWith('1')?d.slice(1):d; if(ten.length!==10)return p||''; return `(${ten.slice(0,3)})${ten.slice(3,6)}-${ten.slice(6)}`; }
 function openOutreachForSong(idx) { showTab('cowriters'); const picker = document.getElementById('outreachSongPicker'); picker.value = idx; renderOutreach(); }
 function inviteCoWritersForCurrentSong() { if(editingIndex < 0) { showToast('Save the song first, then invite co-writers.', 'error'); return; } openOutreachForSong(editingIndex); }
-let outreachLinkMode = 'sheet';
-function setOutreachLinkMode(mode) { outreachLinkMode = mode; document.getElementById('linkModeSheetBtn').classList.toggle('active', mode==='sheet'); document.getElementById('linkModeAppBtn').classList.toggle('active', mode==='app'); renderOutreach(); }
 function renderOutreach() {
   const idx=document.getElementById('outreachSongPicker').value; const content=document.getElementById('outreachContent'); const empty=document.getElementById('outreachEmpty');
   if(idx===''){content.style.display='none';empty.style.display='block';return;} content.style.display='block'; empty.style.display='none';
-  const s=songs[parseInt(idx)]; const formUrl=getFormUrl();
-  let prefilledUrl;
-  if(outreachLinkMode === 'app') {
-    prefilledUrl = getInAppSubmitLink(s);
-    if(!prefilledUrl) { document.getElementById('writerOutreachCards').innerHTML = `<div class="empty">Save this song to the vault first, then come back to generate its in-app link.</div>`; document.getElementById('globalLink').textContent = '—'; return; }
-  } else {
-    prefilledUrl = getPrefilledFormLink(s.title) || formUrl;
-  }
+  const s=songs[parseInt(idx)];
+  const prefilledUrl = getInAppSubmitLink(s);
+  if(!prefilledUrl) { document.getElementById('writerOutreachCards').innerHTML = `<div class="empty">Save this song to the vault first, then come back to generate its link.</div>`; document.getElementById('globalLink').textContent = '—'; return; }
   document.getElementById('globalLink').textContent=prefilledUrl;
   const container=document.getElementById('writerOutreachCards'); container.innerHTML='';
   const cowriters=(s.writers||[]).filter(w=>w.name).slice(1);
