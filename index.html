@@ -54,6 +54,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .writer-row .field label { font-size: 10px; }
 .btn { padding: 9px 18px; border-radius: var(--radius); border: 1px solid var(--border-strong); background: var(--warm-white); color: var(--ink); cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.15s; letter-spacing: 0.01em; }
 .btn:hover { background: var(--cream); border-color: var(--ink-muted); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn.primary { background: var(--ink); color: var(--gold); border-color: var(--ink); }
 .btn.primary:hover { background: #2A2420; }
 .btn.gold { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 600; }
@@ -377,18 +378,19 @@ async function submitAuth() {
       </div>
       <p class="hint" style="margin-top:8px;">Upload the downloaded file at <a href="https://www.sesac.com" target="_blank" style="color:var(--gold);">sesac.com</a> &rarr; My Account &rarr; Song Registration &rarr; Bulk Upload. Mark songs as submitted in the Song Vault after uploading.</p>
     </div>
-    <div class="card">
-      <div class="card-title">MusicMark Bulk Registration Export (BMI / ASCAP / SOCAN)</div>
+    <div class="card" style="opacity:0.75;">
+      <div class="card-title">MusicMark Bulk Registration Export (BMI / ASCAP / SOCAN) <span style="font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:99px;background:var(--gold-muted);color:#8A5A0A;letter-spacing:0.04em;margin-left:6px;vertical-align:middle;">COMING SOON</span></div>
+      <div style="background:var(--gold-muted);border:1px solid var(--gold);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--ink);">MusicMark export is coming soon. It isn&rsquo;t available yet.</div>
       <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Exports a .xlsx file formatted for MusicMark's bulk upload, accepted by BMI, ASCAP, and SOCAN.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn gold" onclick="exportMusicMark('unsubmitted')">&#8681; Export unsubmitted songs (MusicMark)</button>
-        <button class="btn" onclick="exportMusicMark()">&#8681; Export all songs (MusicMark)</button>
+        <button class="btn gold" disabled onclick="exportMusicMark('unsubmitted')">&#8681; Export unsubmitted songs (MusicMark)</button>
+        <button class="btn" disabled onclick="exportMusicMark()">&#8681; Export all songs (MusicMark)</button>
       </div>
       <p class="hint" style="margin-top:8px;">Upload at <a href="https://www.musicmark.com" target="_blank" style="color:var(--gold);">musicmark.com</a>. Works for BMI, ASCAP, and SOCAN registrations.</p>
     </div>
     <div class="card">
-      <div class="card-title">Email Admin &mdash; Mega Gusta Music</div>
-      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This opens a pre-filled Gmail compose window with the writer &amp; publisher info for one song, ready to send to Mega Gusta.</p>
+      <div class="card-title" id="adminCardTitle">Email Admin</div>
+      <p style="font-size:13px;color:var(--ink-light);line-height:1.6;margin-bottom:1rem;">Some songs get registered directly by your admin instead of you exporting them yourself. This opens a pre-filled Gmail compose window with the writer &amp; publisher info for one song, ready to send to your admin. Set your admin&rsquo;s name and email in Settings &rarr; My Default Info.</p>
       <div class="field-grid">
         <div class="field full-width"><label>Song</label><select id="adminEmailSongPicker" onchange="onAdminEmailSongChange()"><option value="">Choose a song...</option></select></div>
       </div>
@@ -396,7 +398,7 @@ async function submitAuth() {
       <div class="btn-row">
         <button class="btn gold" id="sendAdminEmailBtn" onclick="emailAdminInfo()" disabled>&#9993; Email Admin</button>
       </div>
-      <p class="hint" style="margin-top:8px;">Sends to: trina@megustamusicadmin.com, tricia@megustamusicadmin.com. Opens in a new tab using whatever Google account you're logged into &mdash; attach an MP3 there if you want, then hit Send yourself.</p>
+      <p class="hint" style="margin-top:8px;"><span id="adminSendsTo">Sends to: (not set yet)</span>. Opens in a new tab using whatever Google account you're logged into &mdash; attach an MP3 there if you want, then hit Send yourself.</p>
     </div>
   </div>
   <div id="settings" class="section">
@@ -438,6 +440,11 @@ async function submitAuth() {
         <div class="field"><label>Default label</label><input type="text" id="my_label" placeholder="Your label" oninput="saveMyInfo()"></div>
         <div class="field"><label>Default artist name</label><input type="text" id="my_artist" placeholder="Performing artist name" oninput="saveMyInfo()"></div>
         <div class="field"><label>SESAC Account #</label><input type="text" id="my_sesac_account" placeholder="Your SESAC account # (if any)" oninput="saveMyInfo()"></div>
+        <div class="field full-width" style="margin-top:8px;"><label style="color:var(--ink);">Admin details (used by Email Admin)</label></div>
+        <div class="field"><label>Admin company name</label><input type="text" id="my_admin_name" placeholder="Your admin company" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Admin email(s)</label><input type="text" id="my_admin_emails" placeholder="name@admin.com, name2@admin.com" oninput="saveMyInfo()"></div>
+        <div class="field"><label>CC me at (optional)</label><input type="text" id="my_admin_cc" placeholder="Your email" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Email sign-off name</label><input type="text" id="my_admin_signoff" placeholder="Name to sign emails with" oninput="saveMyInfo()"></div>
       </div>
       <div class="btn-row" style="margin-top:1rem;">
         <button class="btn gold" onclick="saveAllSettings();showSavedInfo()">Save my info</button>
@@ -533,7 +540,7 @@ async function addWriter_() {
   try { const result = await supaFetch('/writers', { method: 'POST', body: JSON.stringify({ name, ipi: document.getElementById('newWriterIpi').value.trim(), pro: document.getElementById('newWriterPro').value, sesac_account: document.getElementById('newWriterSesac').value.trim(), user_id: currentUser?.id || null }) }); document.getElementById('addWriterPanel').style.display = 'none'; ['newWriterName','newWriterIpi','newWriterSesac'].forEach(id => document.getElementById(id).value = ''); document.getElementById('newWriterPro').value = ''; await loadWriters(); if(result && result[0]) { document.getElementById('writerPicker').value = result[0].id; await switchWriter(result[0].id); } showToast(`✓ ${name} added`); }
   catch(e) { alert('Failed to add writer: ' + e.message); }
 }
-function getAllSettingsFromForm() { return { my_name: document.getElementById('my_name')?.value||'', my_ipi: document.getElementById('my_ipi')?.value||'', my_pro: document.getElementById('my_pro')?.value||'', my_pct: document.getElementById('my_pct')?.value||'', my_pub_name: document.getElementById('my_pub_name')?.value||'', my_pub_ipi: document.getElementById('my_pub_ipi')?.value||'', my_pub_pro: document.getElementById('my_pub_pro')?.value||'', my_genre: document.getElementById('my_genre')?.value||'', my_language: document.getElementById('my_language')?.value||'English', my_distributor: document.getElementById('my_distributor')?.value||'', my_label: document.getElementById('my_label')?.value||'', my_artist: document.getElementById('my_artist')?.value||'', my_sesac_account: document.getElementById('my_sesac_account')?.value||'', updated_at: new Date().toISOString() }; }
+function getAllSettingsFromForm() { return { my_name: document.getElementById('my_name')?.value||'', my_ipi: document.getElementById('my_ipi')?.value||'', my_pro: document.getElementById('my_pro')?.value||'', my_pct: document.getElementById('my_pct')?.value||'', my_pub_name: document.getElementById('my_pub_name')?.value||'', my_pub_ipi: document.getElementById('my_pub_ipi')?.value||'', my_pub_pro: document.getElementById('my_pub_pro')?.value||'', my_genre: document.getElementById('my_genre')?.value||'', my_language: document.getElementById('my_language')?.value||'English', my_distributor: document.getElementById('my_distributor')?.value||'', my_label: document.getElementById('my_label')?.value||'', my_artist: document.getElementById('my_artist')?.value||'', my_sesac_account: document.getElementById('my_sesac_account')?.value||'', admin_name: document.getElementById('my_admin_name')?.value||'', admin_emails: document.getElementById('my_admin_emails')?.value||'', admin_cc: document.getElementById('my_admin_cc')?.value||'', admin_signoff: document.getElementById('my_admin_signoff')?.value||'', updated_at: new Date().toISOString() }; }
 async function saveAllSettings() {
   const s = getAllSettingsFromForm(); localStorage.setItem('srh_settings', JSON.stringify(s)); localStorage.setItem('srh_myinfo', JSON.stringify({ name: s.my_name, ipi: s.my_ipi, pro: s.my_pro, pct: s.my_pct, pub_name: s.my_pub_name, pub_ipi: s.my_pub_ipi, pub_pro: s.my_pub_pro, genre: s.my_genre, language: s.my_language, distributor: s.my_distributor, label: s.my_label, artist: s.my_artist, sesac_account: s.my_sesac_account })); 
   try { const patched = await supaFetch(`/settings?user_id=eq.${currentUser.id}`, { method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(s) }); if(!patched || !patched.length) { await supaFetch('/settings', { method: 'POST', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ ...s, user_id: currentUser.id }) }); } } catch(e) { console.warn('Settings save to Supabase failed:', e.message); }
@@ -546,7 +553,7 @@ async function loadAllSettings() {
 }
 function applySettingsToForm(s) {
   const set = (id, val) => { const el = document.getElementById(id); if(el && val) el.value = val; };
-  set('my_name', s.my_name); set('my_ipi', s.my_ipi); set('my_pro', s.my_pro); set('my_pct', s.my_pct); set('my_pub_name', s.my_pub_name); set('my_pub_ipi', s.my_pub_ipi); set('my_pub_pro', s.my_pub_pro); set('my_genre', s.my_genre); set('my_language', s.my_language||'English'); set('my_distributor', s.my_distributor); set('my_label', s.my_label); set('my_artist', s.my_artist); set('my_sesac_account', s.my_sesac_account);
+  set('my_name', s.my_name); set('my_ipi', s.my_ipi); set('my_pro', s.my_pro); set('my_pct', s.my_pct); set('my_pub_name', s.my_pub_name); set('my_pub_ipi', s.my_pub_ipi); set('my_pub_pro', s.my_pub_pro); set('my_genre', s.my_genre); set('my_language', s.my_language||'English'); set('my_distributor', s.my_distributor); set('my_label', s.my_label); set('my_artist', s.my_artist); set('my_sesac_account', s.my_sesac_account); set('my_admin_name', s.admin_name); set('my_admin_emails', s.admin_emails); set('my_admin_cc', s.admin_cc); set('my_admin_signoff', s.admin_signoff);
 }
 function saveSettings() { saveAllSettings(); } function loadSettings() { loadAllSettings(); }
 function saveMyInfo() { saveAllSettings(); } function loadMyInfo() { applySettingsToForm(JSON.parse(localStorage.getItem('srh_settings') || '{}')); }
@@ -907,9 +914,20 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 })();
 
 // ---- Email Admin ----
-const ADMIN_EMAIL_RECIPIENTS = ['trina@megustamusicadmin.com', 'tricia@megustamusicadmin.com'];
+function getAdminSettings() {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const emails = v('my_admin_emails').split(/[,;\s]+/).filter(Boolean);
+  const signoff = v('my_admin_signoff') || v('my_name').split(' ')[0] || '';
+  return { name: v('my_admin_name'), emails, cc: v('my_admin_cc'), signoff };
+}
+function renderAdminCard() {
+  const a = getAdminSettings();
+  const t = document.getElementById('adminCardTitle'); if(t) t.innerHTML = 'Email Admin' + (a.name ? ' &mdash; ' + a.name.replace(/</g,'&lt;') : '');
+  const st = document.getElementById('adminSendsTo'); if(st) st.textContent = a.emails.length ? 'Sends to: ' + a.emails.join(', ') : 'Sends to: (not set yet \u2014 add your admin\u2019s email in Settings)';
+}
 
 function populateAdminEmailPicker() {
+  renderAdminCard();
   const sel = document.getElementById('adminEmailSongPicker'); if(!sel) return;
   const cur = sel.value; sel.innerHTML = '<option value="">Choose a song...</option>';
   songs.forEach((s,i) => { const o = document.createElement('option'); o.value = i; o.textContent = s.title; sel.appendChild(o); });
@@ -935,7 +953,7 @@ function buildAdminEmailBody(song) {
   if(song.label) out += `Label: ${song.label}\n`;
   out += `\nWRITERS:\n${writerLines}\n`;
   if(pubLines) out += `\nPUBLISHERS:\n${pubLines}\n`;
-  out += `\nThanks!\nMason`;
+  out += `\nThanks!` + (getAdminSettings().signoff ? `\n${getAdminSettings().signoff}` : '');
   return out;
 }
 
@@ -955,8 +973,10 @@ function emailAdminInfo() {
   const song = songs[parseInt(idx)];
   const subject = `Song registration — "${song.title}"`;
   const body = buildAdminEmailBody(song);
-  const to = ADMIN_EMAIL_RECIPIENTS.join(',');
-  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&cc=masondouglasmusic%40gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+  const a = getAdminSettings();
+  if(!a.emails.length) { showToast('Add your admin\u2019s email in Settings \u2192 My Default Info first.', 'error'); showTab('settings'); return; }
+  const cc = a.cc ? `&cc=${encodeURIComponent(a.cc)}` : '';
+  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(a.emails.join(','))}${cc}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 }
 </script>
 </body>
