@@ -925,6 +925,11 @@ async function submitPublicCoWriterInfo() {
     if(btn) { btn.disabled = false; btn.textContent = 'Submit My Info'; }
   }
 }
+function getInAppSubmitLink(song) {
+  if(!song || !song._id || !currentUser?.id) return null;
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?cw_song=${encodeURIComponent(song._id)}&cw_owner=${encodeURIComponent(currentUser.id)}&cw_title=${encodeURIComponent(song.title||'')}`;
+}
 async function loadPendingSubmissions() {
   if(!currentUser?.id) return;
   try { pendingSubmissions = await supaFetch(`/co_writer_submissions?user_id=eq.${currentUser.id}&status=eq.pending&order=created_at.desc`); }
