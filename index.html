@@ -218,11 +218,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
         <div class="field"><label>Your PRO</label><select id="pub_pro"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>GMR</option><option>None</option></select></div>
       </div>
       <div class="field" style="margin-bottom:12px;"><label>Your Share % (if you know it)</label><input type="number" id="pub_pct" placeholder="e.g. 50" min="0" max="100"></div>
-      <div class="field-grid" style="margin-bottom:12px;">
-        <div class="field"><label>Your Publisher (if any)</label><input type="text" id="pub_pubname" placeholder="Publisher name"></div>
-        <div class="field"><label>Publisher IPI #</label><input type="text" id="pub_pubipi" placeholder="Publisher IPI #"></div>
-      </div>
-      <div class="field" style="margin-bottom:12px;"><label>Publisher PRO</label><select id="pub_pubpro"><option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>None</option></select></div>
+      <div style="font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;">Your Publisher(s) (if any)</div>
+      <div id="ppList"></div>
+      <button type="button" class="add-btn" style="margin-top:0;margin-bottom:6px;" onclick="addPubRow()">+ Add another publisher</button>
+      <div id="ppTotal" class="pct-total" style="margin-bottom:14px;"></div>
       <div class="field-grid" style="margin-bottom:16px;">
         <div class="field"><label>Email</label><input type="email" id="pub_email" placeholder="your@email.com"></div>
         <div class="field"><label>Phone</label><input type="tel" id="pub_phone" placeholder="(615) 000-0000"></div>
@@ -859,23 +858,65 @@ function showPublicSubmitForm() {
   document.querySelector('main.main').style.display = 'none';
   document.getElementById('publicSongTitle').textContent = PUBLIC_SONG_TITLE || 'this song';
   document.getElementById('publicSubmitView').style.display = 'flex';
+  if(!document.querySelector('#ppList .pp-row')) addPubRow();
+}
+const PP_PRO_OPTIONS = '<option value="">Select...</option><option>SESAC</option><option>ASCAP</option><option>BMI</option><option>None</option>';
+function addPubRow() {
+  const list = document.getElementById('ppList'); if(!list) return;
+  const row = document.createElement('div'); row.className = 'pp-row';
+  row.style.cssText = 'border:2px solid var(--ink);padding:10px;margin-bottom:10px;background:var(--cream);';
+  row.innerHTML = `<div class="field" style="margin-bottom:10px;"><label>Publisher name</label><input type="text" class="pp-name" placeholder="Publisher name" oninput="calcPpSplit()"></div>
+    <div class="field-grid" style="margin-bottom:10px;"><div class="field"><label>Publisher IPI #</label><input type="text" class="pp-ipi" placeholder="Publisher IPI #"></div><div class="field"><label>Publisher PRO</label><select class="pp-pro">${PP_PRO_OPTIONS}</select></div></div>
+    <div class="pp-split-wrap"><div class="field"><label>This publisher's share of your publishing %</label><input type="number" class="pp-split" placeholder="e.g. 50" min="0" max="100" oninput="calcPpSplit()"></div></div>
+    <button type="button" class="remove-btn pp-remove" style="margin-top:6px;" onclick="this.closest('.pp-row').remove();calcPpSplit()">Remove this publisher</button>`;
+  list.appendChild(row);
+  const rows = list.querySelectorAll('.pp-row');
+  if(rows.length === 2) { const first = rows[0].querySelector('.pp-split'); if(!first.value) first.value = 50; const second = rows[1].querySelector('.pp-split'); if(!second.value) second.value = 50; }
+  calcPpSplit();
+}
+function calcPpSplit() {
+  const rows = [...document.querySelectorAll('#ppList .pp-row')];
+  rows.forEach((r, i) => { r.querySelector('.pp-split-wrap').style.display = rows.length > 1 ? 'block' : 'none'; r.querySelector('.pp-remove').style.display = i === 0 ? 'none' : 'inline-block'; });
+  const el = document.getElementById('ppTotal'); if(!el) return;
+  if(rows.length < 2) { el.textContent = ''; el.className = 'pct-total'; return; }
+  const total = Math.round(rows.reduce((a, r) => a + (parseFloat(r.querySelector('.pp-split').value) || 0), 0) * 100) / 100;
+  const ok = Math.abs(total - 100) < 0.01;
+  el.textContent = `Publisher split: ${total}% ${ok ? '✓' : '— must equal 100%'}`; el.className = 'pct-total ' + (ok ? 'pct-ok' : 'pct-err');
+}
+function collectPublicPublishers() {
+  const rows = [...document.querySelectorAll('#ppList .pp-row')];
+  const pubs = rows.map(r => ({ name: r.querySelector('.pp-name').value.trim(), ipi: r.querySelector('.pp-ipi').value.trim(), pro: r.querySelector('.pp-pro').value, split: r.querySelector('.pp-split').value.trim() })).filter(p => p.name);
+  if(pubs.length === 1) pubs[0].split = '100';
+  return pubs;
 }
 async function submitPublicCoWriterInfo() {
   const name = document.getElementById('pub_name').value.trim();
   const errEl = document.getElementById('publicFormError'); errEl.style.display = 'none';
   if(!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  const pubs = collectPublicPublishers();
+  if(pubs.length > 1) {
+    const total = Math.round(pubs.reduce((a, p) => a + (parseFloat(p.split) || 0), 0) * 100) / 100;
+    if(Math.abs(total - 100) >= 0.01) { errEl.textContent = 'Your publisher splits need to add up to 100%.'; errEl.style.display = 'block'; return; }
+  }
+  const first = pubs[0] || {};
   const payload = {
     song_id: PUBLIC_SONG_ID, user_id: PUBLIC_OWNER_ID, writer_name: name,
     ipi: document.getElementById('pub_ipi').value.trim(), pro: document.getElementById('pub_pro').value,
     pct: document.getElementById('pub_pct').value.trim(),
-    pub_name: document.getElementById('pub_pubname').value.trim(), pub_ipi: document.getElementById('pub_pubipi').value.trim(), pub_pro: document.getElementById('pub_pubpro').value,
+    pub_name: first.name || '', pub_ipi: first.ipi || '', pub_pro: first.pro || '',
+    publishers: pubs,
     email: document.getElementById('pub_email').value.trim(), phone: document.getElementById('pub_phone').value.trim(),
     status: 'pending'
   };
   const btn = document.querySelector('#publicFormFields .btn.gold'); if(btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+  const send = (body) => fetch(`${SUPA_URL}/co_writer_submissions`, { method: 'POST', headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Accept-Profile': 'song_vault', 'Content-Profile': 'song_vault', 'Prefer': 'return=minimal' }, body: JSON.stringify(body) });
   try {
-    const res = await fetch(`${SUPA_URL}/co_writer_submissions`, { method: 'POST', headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json', 'Accept-Profile': 'song_vault', 'Content-Profile': 'song_vault', 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) });
-    if(!res.ok) { const err = await res.text(); throw new Error(err); }
+    let res = await send(payload);
+    if(!res.ok) {
+      const err = await res.text();
+      if(/publishers/i.test(err) && pubs.length <= 1) { const { publishers, ...legacy } = payload; res = await send(legacy); if(!res.ok) throw new Error(await res.text()); }
+      else throw new Error(err);
+    }
     document.getElementById('publicFormFields').style.display = 'none';
     document.getElementById('publicFormThanks').style.display = 'block';
   } catch(e) {
@@ -884,12 +925,6 @@ async function submitPublicCoWriterInfo() {
     if(btn) { btn.disabled = false; btn.textContent = 'Submit My Info'; }
   }
 }
-function getInAppSubmitLink(song) {
-  if(!song || !song._id || !currentUser?.id) return null;
-  const base = window.location.origin + window.location.pathname;
-  return `${base}?cw_song=${encodeURIComponent(song._id)}&cw_owner=${encodeURIComponent(currentUser.id)}&cw_title=${encodeURIComponent(song.title||'')}`;
-}
-let pendingSubmissions = [];
 async function loadPendingSubmissions() {
   if(!currentUser?.id) return;
   try { pendingSubmissions = await supaFetch(`/co_writer_submissions?user_id=eq.${currentUser.id}&status=eq.pending&order=created_at.desc`); }
@@ -904,7 +939,7 @@ function renderPendingSubmissions() {
   el.innerHTML = pendingSubmissions.map(sub => {
     const song = songs.find(s => s._id === sub.song_id); const songLabel = song ? song.title : '(song not found in vault)';
     const when = sub.created_at ? new Date(sub.created_at).toLocaleString() : '';
-    const details = [sub.ipi?`IPI: ${sub.ipi}`:'', sub.pro?`PRO: ${sub.pro}`:'', sub.pct?`Share: ${sub.pct}%`:'', sub.pub_name?`Pub: ${sub.pub_name}`:'', sub.email||'', sub.phone||''].filter(Boolean).join(' &middot; ');
+    const details = [sub.ipi?`IPI: ${sub.ipi}`:'', sub.pro?`PRO: ${sub.pro}`:'', sub.pct?`Share: ${sub.pct}%`:'', (Array.isArray(sub.publishers)&&sub.publishers.length>1)?`Pubs: ${sub.publishers.map(p=>p.name+(p.split?' '+p.split+'%':'')).join(' / ')}`:(sub.pub_name?`Pub: ${sub.pub_name}`:''), sub.email||'', sub.phone||''].filter(Boolean).join(' &middot; ');
     return `<div class="outreach-card" style="margin-bottom:10px;">
       <div class="outreach-header"><div><div class="writer-label">${sub.writer_name}</div><div class="writer-sublabel">for &ldquo;${songLabel}&rdquo; &middot; ${when}</div></div></div>
       ${details?`<div class="hint" style="margin-bottom:10px;">${details}</div>`:''}
@@ -925,11 +960,19 @@ async function mergeSubmission(subId) {
   const updatedWriter = { name: sub.writer_name, ipi: sub.ipi||'', pro: sub.pro||'', pub_name: sub.pub_name||'', pub_ipi: sub.pub_ipi||'', pub_pro: sub.pub_pro||'' };
   let pctNote = '';
   if(!(existingWriter && existingWriter.pct)) { updatedWriter.pct = sub.pct||''; } else if(sub.pct && sub.pct !== existingWriter.pct) { pctNote = ` (kept your existing ${existingWriter.pct}% — submission had ${sub.pct}%, not overwritten)`; }
-  if(sub.pub_name) {
+  const subPubs = (Array.isArray(sub.publishers) && sub.publishers.length) ? sub.publishers.filter(p => p && p.name) : (sub.pub_name ? [{ name: sub.pub_name, ipi: sub.pub_ipi||'', pro: sub.pub_pro||'', split: '100' }] : []);
+  let splitNote = '';
+  if(subPubs.length) {
     if(!song.publishers) song.publishers = [];
-    const existingPubIdx = song.publishers.findIndex(p => p.name.toLowerCase() === sub.pub_name.toLowerCase());
-    if(existingPubIdx >= 0) { const existingPub = song.publishers[existingPubIdx]; const pubPatch = { name: sub.pub_name, ipi: sub.pub_ipi||'', pro: sub.pub_pro||'', writer: sub.writer_name }; if(!existingPub.pct) { pubPatch.pct = sub.pct||''; } song.publishers[existingPubIdx] = { ...existingPub, ...pubPatch }; }
-    else { song.publishers.push({ name: sub.pub_name, ipi: sub.pub_ipi||'', pro: sub.pub_pro||'', pct: '', writer: sub.writer_name }); }
+    const writerPct = parseFloat(updatedWriter.pct !== undefined ? updatedWriter.pct : (existingWriter && existingWriter.pct)) || 0;
+    if(subPubs.length > 1 && !writerPct) splitNote = ' \u2014 add this writer\u2019s share % so the publisher split can be calculated';
+    subPubs.forEach(sp => {
+      const splitPct = parseFloat(sp.split) || 0;
+      const calcPct = (writerPct && splitPct) ? String(Math.round(writerPct * splitPct) / 100) : '';
+      const existingPubIdx = song.publishers.findIndex(p => p.name.toLowerCase() === sp.name.toLowerCase() && (!p.writer || p.writer.toLowerCase() === sub.writer_name.toLowerCase()));
+      if(existingPubIdx >= 0) { const existingPub = song.publishers[existingPubIdx]; const pubPatch = { name: sp.name, ipi: sp.ipi||'', pro: sp.pro||'', writer: sub.writer_name }; if(!existingPub.pct) { pubPatch.pct = calcPct || (subPubs.length === 1 ? (sub.pct||'') : ''); } song.publishers[existingPubIdx] = { ...existingPub, ...pubPatch }; }
+      else { song.publishers.push({ name: sp.name, ipi: sp.ipi||'', pro: sp.pro||'', pct: calcPct, writer: sub.writer_name }); }
+    });
   }
   if(writerIdx >= 0) { song.writers[writerIdx] = { ...song.writers[writerIdx], ...updatedWriter }; } else { if(!song.writers) song.writers = []; song.writers.push(updatedWriter); }
   if(!song.outreach) song.outreach = {}; if(!song.outreach[sub.writer_name]) song.outreach[sub.writer_name] = {};
@@ -938,7 +981,7 @@ async function mergeSubmission(subId) {
   await saveSongToSupabase(song);
   try { await supaFetch(`/co_writer_submissions?id=eq.${sub.id}`, { method: 'PATCH', headers: { 'Prefer': 'return=minimal' }, body: JSON.stringify({ status: 'merged' }) }); } catch(e) { console.warn('Could not mark submission merged:', e.message); }
   localStorage.setItem('srh_songs', JSON.stringify(songs));
-  showToast(`✓ Merged ${sub.writer_name}'s info into "${song.title}"${pctNote}`);
+  showToast(`✓ Merged ${sub.writer_name}'s info into "${song.title}"${pctNote}${splitNote}`);
   renderVault(); await loadPendingSubmissions();
 }
 async function dismissSubmission(subId) {
