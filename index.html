@@ -199,6 +199,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
     <div style="font-size:12px;font-family:'DM Sans',sans-serif;">
       <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:#0B3C8A;text-decoration:underline;">Need an account? Sign up</a>
     </div>
+    <div style="margin-top:18px;font-size:11px;line-height:1.6;font-family:'DM Sans',sans-serif;color:var(--ink-muted);">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</div>
   </div>
 </div>
 <div id="publicSubmitView" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:2rem 1rem;background:var(--cream);">
@@ -221,6 +222,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
         <div class="field"><label>Phone</label><input type="tel" id="pub_phone" placeholder="(615) 000-0000"></div>
       </div>
       <button class="btn gold" style="width:100%;padding:12px;font-size:14px;" onclick="submitPublicCoWriterInfo()">Submit My Info</button>
+      <div style="font-size:11px;color:var(--ink-muted);line-height:1.6;margin-top:10px;">Your info goes to the songwriter who invited you so they can register this song. See our <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a> and <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a>.</div>
       <div id="publicFormError" style="color:var(--rust);font-size:12px;margin-top:10px;display:none;"></div>
     </div>
     <div id="publicFormThanks" style="display:none;text-align:center;padding:1rem 0;">
@@ -274,7 +276,7 @@ async function submitAuth() {
     <a class="hdr-btn" href="guide.html" target="_blank" rel="noopener" title="How to use the app" style="text-decoration:none;display:inline-block;">Help</a>
     <button class="hdr-btn" onclick="signOutUser()" title="Sign out">Sign Out</button>
   </div>
-  <div class="header-right">Mason Douglas Music LLC</div>
+  <div class="header-right">Now You Know Nashville LLC</div>
 </header>
 <div id="manageWritersPanel" style="display:none;">
   <div style="max-width:900px;margin:0 auto;">
@@ -497,6 +499,9 @@ async function submitAuth() {
     </div>
   </div>
 </main>
+<footer id="siteFooter" style="max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 2.5rem;text-align:center;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-muted);">
+  &copy; Now You Know Nashville LLC &nbsp;&middot;&nbsp; <a href="terms.html" target="_blank" rel="noopener" style="color:var(--ink-muted);">Terms</a> &nbsp;&middot;&nbsp; <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--ink-muted);">Privacy</a>
+</footer>
 <script>
 const SUPA_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co/rest/v1';
 const SUPA_PROJECT_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co';
@@ -862,6 +867,7 @@ function showPublicSubmitForm() {
   document.getElementById('authOverlay').style.display = 'none';
   document.querySelector('header.header').style.display = 'none';
   document.querySelector('main.main').style.display = 'none';
+  const _ft = document.getElementById('siteFooter'); if(_ft) _ft.style.display = 'none';
   document.getElementById('publicSongTitle').textContent = PUBLIC_SONG_TITLE || 'this song';
   document.getElementById('publicSubmitView').style.display = 'flex';
   if(!document.querySelector('#ppList .pp-row')) addPubRow();
