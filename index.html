@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>The SongSubHub</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -190,7 +192,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 <body>
 <div id="authOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;">
   <div style="text-align:center;padding:2rem;width:300px;">
-    <div class="auth-title">The SongSubHub</div>
+    <img src="logo.png" alt="Song Vault" width="160" height="160" style="display:block;margin:0 auto 14px;width:160px;height:160px;border-radius:50%;">
     <div class="auth-sub" id="authSubtitle">Sign in to your vault</div>
     <input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
     <input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" style="margin-bottom:12px;">
@@ -266,7 +268,7 @@ async function submitAuth() {
 }
 </script>
 <header class="header">
-  <div class="logo">The SongSubHub</div>
+  <a class="logo" href="./" style="display:flex;align-items:center;text-decoration:none;" title="Song Vault"><img src="logo.png" alt="Song Vault" width="44" height="44" style="display:block;width:44px;height:44px;border-radius:50%;"></a>
   <div class="header-mid">
     <select id="writerPicker" class="hdr-select" onchange="switchWriter(this.value)"><option value="">Loading...</option></select>
     <button class="hdr-btn" onclick="showAddWriterModal()" title="Add writer" style="font-size:16px;padding:4px 10px;">+</button>
