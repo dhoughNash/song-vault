@@ -535,14 +535,26 @@ async function supaFetch(path, options={}) {
 }
 function rowToSong(row) { return { _id: row.id, title: row.title||'', altTitle: row.alt_title||'', iswc: row.iswc||'', duration: row.duration||'', genre: row.genre||'', language: row.language||'English', releaseDate: row.release_date||'', dateOfCreation: row.date_of_creation||'', isrc: row.isrc||'', upc: row.upc||'', artist: row.artist||'', album: row.album||'', label: row.label||'', distributor: row.distributor||'', lyrics: row.lyrics||'', bpm: row.bpm||'', key: row.key||'', instrumentation: row.instrumentation||'', mood: row.mood||'', writers: row.writers||[], publishers: row.publishers||[], outreach: row.outreach||{}, registrations: row.registrations||{}, updated_at: row.updated_at||null }; }
 function songToSupaRow(song) { return { title: song.title||'', alt_title: song.altTitle||'', iswc: song.iswc||'', duration: song.duration||'', genre: song.genre||'', language: song.language||'English', release_date: song.releaseDate||'', date_of_creation: song.dateOfCreation||null, isrc: song.isrc||'', upc: song.upc||'', artist: song.artist||'', album: song.album||'', label: song.label||'', distributor: song.distributor||'', lyrics: song.lyrics||'', bpm: song.bpm||'', key: song.key||'', instrumentation: song.instrumentation||'', mood: song.mood||'', writers: song.writers||[], publishers: song.publishers||[], outreach: song.outreach||{}, registrations: song.registrations||{}, updated_at: new Date().toISOString() }; }
+let lastSongsSync = null; let lastSongsRefreshAt = 0;
 async function loadSongsFromSupabase(silent=false) {
   try {
     if(!silent) showToast('Loading songs...', 'info'); const writerFilter = activeWriterId ? `&writer_id=eq.${activeWriterId}` : '';
-    const rows = await supaFetch(`/songs?order=updated_at.desc&user_id=eq.${currentUser?.id}${writerFilter}`); songs = rows.map(rowToSong); localStorage.setItem('srh_songs', JSON.stringify(songs));
+    const incremental = silent && lastSongsSync && songs.length;
+    const sinceFilter = incremental ? `&updated_at=gt.${encodeURIComponent(lastSongsSync)}` : '';
+    const rows = await supaFetch(`/songs?order=updated_at.desc&user_id=eq.${currentUser?.id}${writerFilter}${sinceFilter}`);
+    lastSongsRefreshAt = Date.now();
+    const newest = rows.reduce((m, r) => (r.updated_at && (!m || r.updated_at > m)) ? r.updated_at : m, null);
+    if(newest) lastSongsSync = newest; else if(!incremental) lastSongsSync = new Date().toISOString();
+    if(incremental) {
+      if(!rows.length) return;
+      const changed = rows.map(rowToSong); const changedIds = new Set(changed.map(c => c._id));
+      songs = [...changed, ...songs.filter(x => !changedIds.has(x._id))];
+    } else { songs = rows.map(rowToSong); }
+    localStorage.setItem('srh_songs', JSON.stringify(songs));
     await buildKnownCoWriters(); const vaultActive = document.getElementById('vault').classList.contains('active'); if(vaultActive || !silent) renderVault();
     const cowritersActive = document.getElementById('cowriters').classList.contains('active'); if(cowritersActive && !silent) { const idx = document.getElementById('outreachSongPicker').value; if(idx !== '') renderOutreach(); }
-    if(!silent) showToast(`✓ Loaded ${songs.length} songs from database`);
-  } catch(e) { console.warn('Supabase load failed, falling back to local:', e.message); songs = JSON.parse(localStorage.getItem('srh_songs') || '[]'); await buildKnownCoWriters(); if(!silent) renderVault(); if(!silent) showToast('Using local cache — check internet connection', 'error'); }
+    if(!silent) showToast(`\u2713 Loaded ${songs.length} songs from database`);
+  } catch(e) { console.warn('Supabase load failed, falling back to local:', e.message); songs = JSON.parse(localStorage.getItem('srh_songs') || '[]'); await buildKnownCoWriters(); if(!silent) renderVault(); if(!silent) showToast('Using local cache \u2014 check internet connection', 'error'); }
 }
 async function buildKnownCoWriters() {
   const seen = new Map(); const myNameLower = (document.getElementById('my_name')?.value || '').trim().toLowerCase();
@@ -1013,7 +1025,9 @@ async function startApp() {
   loadWriters().then(() => loadSongsFromSupabase());
   loadPendingSubmissions();
   ensureSubscriptionRow().then(() => { renderSubscriptionStatus(); if(document.getElementById('vault').classList.contains('active')) renderVault(); });
-  setInterval(() => { loadSongsFromSupabase(true); }, 3 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible' && appStarted && Date.now() - lastSongsRefreshAt > 5 * 60 * 1000) loadSongsFromSupabase(true);
+  });
 }
 async function onAuthReady(session) {
   currentSession = session; currentUser = session.user;
