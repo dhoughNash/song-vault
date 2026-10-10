@@ -81,11 +81,6 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .page-sub { font-family: 'Oswald', sans-serif; font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-muted); margin-top: 6px; }
 .song-row { display: flex; align-items: stretch; background: var(--warm-white); border: 2px solid var(--ink); margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
 .song-row:hover { border-color: var(--blue); }
-.status-block { width: 56px; flex-shrink: 0; display: flex; flex-direction: column; }
-.status-block > div { flex: 1; display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif; font-size: 10px; letter-spacing: 1px; color: var(--cream); min-height: 26px; }
-.status-block > div + div { border-top: 2px solid var(--cream); }
-.status-block .s-done { background: var(--blue); }
-.status-block .s-todo { background: var(--red); }
 .song-body { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; flex-wrap: wrap; }
 .song-title-text { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 21px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink); }
 .song-meta { font-size: 12px; color: var(--ink-muted); margin-top: 3px; }
@@ -170,8 +165,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
   .btn-row { gap: 8px; } .btn-row .btn, .btn-row a { width: 100%; text-align: center; } .btn-row a .btn { width: 100%; }
   .add-btn { padding: 12px; font-size: 13px; } .org-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
   .org-card { padding: 0.75rem 0.5rem; } .org-card .org-name { font-size: 12px; } .org-card .org-type { font-size: 9px; }
-  .song-body { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; } .status-block { width: 48px; }
-  .outreach-card { padding: 1rem; } .outreach-header { flex-wrap: wrap; gap: 8px; } .contact-grid { grid-template-columns: 1fr; }
+  .song-body { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px; }   .outreach-card { padding: 1rem; } .outreach-header { flex-wrap: wrap; gap: 8px; } .contact-grid { grid-template-columns: 1fr; }
   .method-pills { gap: 6px; } .mpill { flex: 1; text-align: center; padding: 8px 6px; font-size: 11px; }
   .form-url-banner { flex-direction: column; align-items: stretch; gap: 8px; } .form-url-banner input { min-width: unset; width: 100%; } .form-url-label { white-space: normal; }
   .preview-box { font-size: 11px; max-height: 200px; } #settings .field-grid { grid-template-columns: 1fr; } #syncStatus { font-size: 12px; }
@@ -310,17 +304,13 @@ async function submitAuth() {
         <button class="btn gold" onclick="showTab('entry');clearForm()">+ New Song</button>
       </div>
     </div>
+    <div style="margin-bottom:12px;"><input type="search" id="vaultSearch" placeholder="Search title, artist, writer, publisher, ISRC, anything..." oninput="renderVault()" autocomplete="off" style="width:100%;padding:12px 14px;border:2px solid var(--ink);border-radius:0;background:var(--warm-white);color:var(--ink);font-size:14px;font-family:'DM Sans',sans-serif;"></div>
     <div id="vaultSubmissionsCard" class="card" style="display:none;border-color:var(--gold);">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
         <span>&#128229; Pending Co-writer Submissions</span>
         <button class="btn" style="font-size:11px;padding:4px 10px;" onclick="loadPendingSubmissions()">&#8635; Refresh</button>
       </div>
       <div id="pendingSubmissionsList"></div>
-    </div>
-    <div style="display:flex;gap:18px;align-items:center;padding:0 0 12px;font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--ink);flex-wrap:wrap;">
-      <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:var(--blue);display:inline-block;"></span>FILED</span>
-      <span style="display:flex;align-items:center;gap:6px;"><span style="width:14px;height:14px;background:var(--red);display:inline-block;"></span>STILL TO DO</span>
-      <span style="margin-left:auto;color:var(--ink-muted);">TOP HALF SESAC &middot; BOTTOM HALF MLC</span>
     </div>
     <div id="songsList"></div>
     <div id="emptyVault" class="empty"><div class="empty-icon">&#9834;</div>No songs yet. Add your first to get started.</div>
@@ -708,7 +698,11 @@ function renderVault() {
   if(subEl) { if(hasActiveAccess()) { subEl.textContent = 'Your registered catalog'; } else { const limit = getSongLimit(); subEl.innerHTML = `Your registered catalog &mdash; ${songs.length}/${limit} free songs used <a href="#" onclick="showTab('settings');return false;" style="color:var(--gold);">Subscribe for unlimited &rarr;</a>`; } }
   const list=document.getElementById('songsList'); const empty=document.getElementById('emptyVault'); list.innerHTML=''; if(!songs.length){empty.style.display='block';return;} empty.style.display='none';
   const indexed = songs.map((s,i) => ({s, i})); if(vaultSort === 'alpha') { indexed.sort((a,b) => a.s.title.localeCompare(b.s.title)); } else { indexed.sort((a,b) => (b.s.updated_at||'').localeCompare(a.s.updated_at||'')); }
-  indexed.forEach(({s,i})=>{
+  const q=(document.getElementById('vaultSearch')?.value||'').trim().toLowerCase();
+  const songText=(obj)=>{ const out=[]; const walk=(v,k)=>{ if(v==null||k==='_id'||k==='updated_at'||k==='user_id'||k==='writer_id') return; if(typeof v==='string'||typeof v==='number') out.push(String(v)); else if(Array.isArray(v)) v.forEach(x=>walk(x)); else if(typeof v==='object') Object.entries(v).forEach(([kk,vv])=>{ if(kk!=='registrations') { out.push(kk); } walk(vv,kk); }); }; walk(obj); return out.join(' ').toLowerCase(); };
+  const shown = q ? indexed.filter(({s}) => q.split(/\s+/).every(t => songText(s).includes(t))) : indexed;
+  if(q && !shown.length) { list.innerHTML='<div class="empty">No songs match "'+q.replace(/[<>&"]/g,'')+'".</div>'; return; }
+  shown.forEach(({s,i})=>{
     const o=s.outreach||{};
     const activeCowriters=(s.writers||[]).filter(w=>w.name).slice(1);
     const countableCo=activeCowriters.filter(w=>(o[w.name]||{}).status!=='no_response_needed');
@@ -726,11 +720,9 @@ function renderVault() {
     leftDiv.innerHTML=`<div class="song-title-text">${s.title}</div><div class="song-meta">${s.artist||'No artist'}${s.genre?' · '+s.genre:''}</div><div class="next-step ${nextCls}">${nextText}</div>`;
     const rightDiv=document.createElement('div'); rightDiv.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
     rightDiv.innerHTML=`<div class="badges">${totalCo>0?`<span class="badge ${responded===totalCo?'responded':responded>0?'invited':'pending'}">${responded}/${totalCo} co-writers</span>`:''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"><button class="btn${adminSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleAdminSubmitted(${i})">${adminSubmitted?'Admin ✓':'Mark Admin'}</button><button class="btn${sesacSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleSesacSubmitted(${i})">${sesacSubmitted?'SESAC ✓':'Mark SESAC'}</button><button class="btn${mlcSubmitted?' success':''}" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();toggleMlcSubmitted(${i})">${mlcSubmitted?'MLC ✓':'Mark MLC'}</button><button class="btn" style="font-size:11px;padding:5px 10px;flex-shrink:0;width:88px;text-align:center;" onclick="event.stopPropagation();duplicateSong(${i})">⧉ Duplicate</button></div>`;
-    const statusBlock=document.createElement('div'); statusBlock.className='status-block';
-    statusBlock.innerHTML=`<div class="${sesacSubmitted?'s-done':'s-todo'}">SESAC</div><div class="${mlcSubmitted?'s-done':'s-todo'}">MLC</div>`;
     const bodyDiv=document.createElement('div'); bodyDiv.className='song-body';
     bodyDiv.appendChild(leftDiv); bodyDiv.appendChild(rightDiv);
-    row.appendChild(statusBlock); row.appendChild(bodyDiv); list.appendChild(row);
+    row.appendChild(bodyDiv); list.appendChild(row);
   });
 }
 async function duplicateSong(i) { const original = songs[i]; const newTitle = prompt(`Enter a title for the duplicate of "${original.title}":`, `${original.title} (Copy)`); if(!newTitle || !newTitle.trim()) return; const duplicate = JSON.parse(JSON.stringify(original)); delete duplicate._id; duplicate.title = newTitle.trim(); duplicate.registrations = {}; duplicate.writer_id = activeWriterId || null; songs.push(duplicate); localStorage.setItem('srh_songs', JSON.stringify(songs)); await saveSongToSupabase(songs[songs.length - 1]); renderVault(); showToast(`✓ "${newTitle.trim()}" created`); }
