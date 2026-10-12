@@ -1,5 +1,9 @@
 const crypto = require('crypto');
 
+// client_reference_id comes from the checkout link, so it is untrusted. It must be a real
+// UUID before it is used in a database URL.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const SUPABASE_URL = 'https://ydxriywpkkdptwcuqaaj.supabase.co/rest/v1';
@@ -62,7 +66,7 @@ async function supabaseUpsertSubscription(userId, fields) {
     'Accept-Profile': 'song_vault',
     'Content-Profile': 'song_vault'
   };
-  const patchRes = await fetch(`${SUPABASE_URL}/subscriptions?user_id=eq.${userId}`, {
+  const patchRes = await fetch(`${SUPABASE_URL}/subscriptions?user_id=eq.${encodeURIComponent(userId)}`, {
     method: 'PATCH',
     headers: { ...headers, 'Prefer': 'return=representation' },
     body: JSON.stringify(fields)
@@ -82,7 +86,7 @@ async function supabaseUpsertSubscription(userId, fields) {
 }
 
 async function supabaseFindBySubscriptionId(stripeSubscriptionId) {
-  const res = await fetch(`${SUPABASE_URL}/subscriptions?stripe_subscription_id=eq.${stripeSubscriptionId}&limit=1`, {
+  const res = await fetch(`${SUPABASE_URL}/subscriptions?stripe_subscription_id=eq.${encodeURIComponent(stripeSubscriptionId)}&limit=1`, {
     headers: {
       'apikey': SUPABASE_SERVICE_ROLE_KEY,
       'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -117,8 +121,8 @@ exports.handler = async (event) => {
       const session = stripeEvent.data.object;
       const userId = session.client_reference_id;
       const subscriptionId = session.subscription;
-      if (!userId || !subscriptionId) {
-        return { statusCode: 200, body: 'No client_reference_id or subscription on session; ignoring' };
+      if (!userId || !UUID_RE.test(userId) || !subscriptionId) {
+        return { statusCode: 200, body: 'No valid client_reference_id or subscription on session; ignoring' };
       }
 
       const subscription = await stripeGet(`subscriptions/${subscriptionId}?expand[]=items.data.price`);
