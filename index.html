@@ -497,6 +497,7 @@ async function submitAuth() {
         <div class="field"><label>Admin email(s)</label><input type="text" id="my_admin_emails" placeholder="name@admin.com, name2@admin.com" oninput="saveMyInfo()"></div>
         <div class="field"><label>CC me at (optional)</label><input type="text" id="my_admin_cc" placeholder="Your email" oninput="saveMyInfo()"></div>
         <div class="field"><label>Email sign-off name</label><input type="text" id="my_admin_signoff" placeholder="Name to sign emails with" oninput="saveMyInfo()"></div>
+        <div class="field"><label>Email app (this device)</label><select id="my_mail_client" onchange="setMailClient(this.value)"><option value="">Ask me when I send</option><option value="gmail">Gmail (web)</option><option value="outlook">Outlook / Microsoft 365 (web)</option><option value="yahoo">Yahoo Mail (web)</option><option value="default">Default mail app</option><option value="copy">Just copy the email</option></select></div>
       </div>
       <div class="btn-row" style="margin-top:1rem;">
         <button class="btn gold" onclick="saveAllSettings();showSavedInfo()">Save my info</button>
@@ -630,7 +631,7 @@ function getMyInfo() { const s = JSON.parse(localStorage.getItem('srh_settings')
 function showSavedInfo() { const el = document.getElementById('myInfoSaved'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
 function showTab(t) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(t).classList.add('active'); window.scrollTo({top:0,behavior:'instant'});
-  if(t==='vault') { renderVault(); loadPendingSubmissions(); } if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); renderSubscriptionStatus(); loadPendingSubmissions(); }
+  if(t==='vault') { renderVault(); loadPendingSubmissions(); } if(t==='submit') { refreshPreview(); populateAdminEmailPicker(); } if(t==='cowriters') { populatePicker('outreachSongPicker'); renderOutreach(); } if(t==='settings') { loadAllSettings(); syncMailClientSelect(); renderSubscriptionStatus(); loadPendingSubmissions(); }
 }
 function addWriter(data) {
   const c = document.getElementById('writersContainer'); const d = document.createElement('div'); d.className = 'writer-row'; const pctManual = data && data.pct ? '1' : '0';
@@ -667,16 +668,36 @@ function calcPct() { const vals = [...document.querySelectorAll('.w-pct')].map(i
 function calcPubPct() { const vals = [...document.querySelectorAll('.p-pct')].map(i=>parseFloat(i.value)||0); const total = Math.round(vals.reduce((a,b)=>a+b,0)*100)/100; const el = document.getElementById('pubPctTotal'); if(!vals.length){el.textContent='';return;} const ok = Math.abs(total-100)<0.01; el.textContent = `Publisher shares: ${total}% (SESAC export: ${Math.round(total/2*100)/100}%) ${ok?'✓':'— must equal 100%'}`; el.className = 'pct-total '+(ok?'pct-ok':'pct-err'); }
 function openSms(href) { const idx = document.getElementById('outreachSongPicker').value; const iframe = document.createElement('iframe'); iframe.style.display = 'none'; iframe.src = href; document.body.appendChild(iframe); setTimeout(() => { document.body.removeChild(iframe); document.getElementById('outreachSongPicker').value = idx; renderOutreach(); }, 1000); }
 function isMobile(){ return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches; }
+const MAIL_CLIENTS = { gmail:'Gmail (web)', outlook:'Outlook / Microsoft 365 (web)', yahoo:'Yahoo Mail (web)', default:'Default mail app (Apple Mail, desktop Outlook, phone mail app)', copy:'Just copy the email so I can paste it' };
+function getMailClient() { try { const c = localStorage.getItem('srh_mail_client'); return MAIL_CLIENTS[c] ? c : ''; } catch(e) { return ''; } }
+function setMailClient(c) { try { if(c) localStorage.setItem('srh_mail_client', c); } catch(e) {} }
+function mailBtnLabel() { const c = getMailClient(); return c==='gmail' ? 'Open in Gmail' : c==='outlook' ? 'Open in Outlook' : c==='yahoo' ? 'Open in Yahoo Mail' : c==='copy' ? 'Copy Email' : 'Open in Email'; }
+function syncMailClientSelect() { const el = document.getElementById('my_mail_client'); if(el) el.value = getMailClient(); }
+function sendViaMailClient(client, to, cc, su, body) {
+  const q = encodeURIComponent;
+  if(client === 'gmail') { window.open(`https://mail.google.com/mail/?view=cm&to=${q(to)}&su=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
+  else if(client === 'outlook') { window.open(`https://outlook.office.com/mail/deeplink/compose?to=${q(to)}&subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
+  else if(client === 'yahoo') { window.open(`https://compose.mail.yahoo.com/?to=${q(to)}&subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
+  else if(client === 'copy') { const txt = `To: ${to}${cc?'\nCC: '+cc:''}\nSubject: ${su}\n\n${body}`; navigator.clipboard.writeText(txt).then(() => showToast('✓ Email copied — paste it into your email app'), () => showToast('Could not copy automatically', 'error')); }
+  else { window.location.href = `mailto:${to}?subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`; }
+}
 function openMail(to, cc, su, body) {
-  if(isMobile()) {
-    let url = `mailto:${to}?subject=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
-    if(cc) url += `&cc=${encodeURIComponent(cc)}`;
-    window.location.href = url;
-  } else {
-    let url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&su=${encodeURIComponent(su)}&body=${encodeURIComponent(body)}`;
-    if(cc) url += `&cc=${encodeURIComponent(cc)}`;
-    window.open(url, '_blank');
-  }
+  const client = getMailClient();
+  if(client) { sendViaMailClient(client, to, cc, su, body); return; }
+  const old = document.getElementById('mailChooser'); if(old) old.remove();
+  const ov = document.createElement('div'); ov.id = 'mailChooser';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(26,22,18,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--warm-white,#fff);border:1px solid var(--border-strong,#ccc);border-radius:8px;padding:20px;max-width:380px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.25);';
+  box.innerHTML = '<div style="font-size:15px;font-weight:600;margin-bottom:4px;">Which email do you use?</div><div style="font-size:12px;color:var(--ink-muted,#777);margin-bottom:14px;">Asked once on this device. You can change it later in Settings.</div>';
+  Object.keys(MAIL_CLIENTS).forEach(k => {
+    const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'display:block;width:100%;text-align:left;margin-bottom:8px;'; b.textContent = MAIL_CLIENTS[k];
+    b.onclick = () => { setMailClient(k); ov.remove(); syncMailClientSelect(); sendViaMailClient(k, to, cc, su, body); };
+    box.appendChild(b);
+  });
+  const cancel = document.createElement('button'); cancel.className = 'btn'; cancel.style.cssText = 'width:100%;margin-top:4px;'; cancel.textContent = 'Cancel'; cancel.onclick = () => ov.remove();
+  box.appendChild(cancel); ov.appendChild(box); ov.onclick = e => { if(e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
 }
 function openGmail(key) {
   const href = window._gmailLinks && window._gmailLinks[key];
@@ -702,7 +723,7 @@ function exportSESAC(songIndices) {
 }
 function exportVault() { const data = { exported: new Date().toISOString(), version: '1.0', songs: songs }; const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `songwriter-vault-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); logSync(`Exported ${songs.length} songs to JSON backup file.`); setSyncStatus(`✓ Backup downloaded — ${songs.length} songs exported.`, 'success'); }
 function importVault() { const input = document.createElement('input'); input.type = 'file'; input.accept = '.json'; input.onchange = (e) => { const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); const imported = data.songs || data; if(!Array.isArray(imported)) throw new Error('Invalid backup file format.'); let added=0, updated=0; imported.forEach(importedSong => { const existingIdx = songs.findIndex(s => s.title.toLowerCase()===importedSong.title.toLowerCase()); if(existingIdx>=0){ songs[existingIdx] = {...importedSong, ...songs[existingIdx]}; updated++; } else { songs.push(importedSong); added++; } }); localStorage.setItem('srh_songs', JSON.stringify(songs)); renderVault(); setSyncStatus(`✓ Import complete — ${added} songs added, ${updated} updated.`, 'success'); logSync(`Imported from file: ${added} new, ${updated} updated.`); } catch(err) { setSyncStatus(`Import failed: ${err.message}`, 'error'); } }; reader.readAsText(file); }; input.click(); }
-function emailSongInfo() { const d = getSongData(); if(!d.title.trim()) { alert('Please enter a song title first.'); return; } const songIdx = editingIndex >= 0 ? editingIndex : -1; const outreach = songIdx >= 0 ? (songs[songIdx].outreach || {}) : {}; const cowriters = (d.writers || []).slice(1).filter(w => w.name); const emails = cowriters.map(w => (outreach[w.name] || {}).email || '').filter(Boolean); const to = emails.join(','); const writerLines = (d.writers || []).filter(w => w.name).map((w, i) => `  ${i + 1}. ${w.name}${w.ipi ? ' | IPI: ' + w.ipi : ''}${w.pro ? ' | PRO: ' + w.pro : ''}${w.pct ? ' | Share: ' + w.pct + '%' : ''}`).join('\n'); const pubLines = (d.publishers || []).filter(p => p.name).map((p, i) => `  ${i + 1}. ${p.name}${p.ipi ? ' | IPI: ' + p.ipi : ''}${p.pro ? ' | PRO: ' + p.pro : ''}${p.pct ? ' | Share: ' + p.pct + '%' : ''}`).join('\n'); const subject = `Song info — "${d.title}"`; const body = `Here's the current song info for "${d.title}" for your records.\n\nTitle: ${d.title||'—'}\nDuration: ${d.duration||'—'}\nGenre: ${d.genre||'—'}\nLanguage: ${d.language||'English'}\n\nWRITERS:\n${writerLines||'  None listed'}\n${pubLines?'\nPUBLISHERS:\n'+pubLines:''}\n\nPlease let me know if anything looks off.\n\n— Mason Douglas`; openMail(to, 'masondouglasmusic@gmail.com', subject, body); }
+function emailSongInfo() { const d = getSongData(); if(!d.title.trim()) { alert('Please enter a song title first.'); return; } const songIdx = editingIndex >= 0 ? editingIndex : -1; const outreach = songIdx >= 0 ? (songs[songIdx].outreach || {}) : {}; const cowriters = (d.writers || []).slice(1).filter(w => w.name); const emails = cowriters.map(w => (outreach[w.name] || {}).email || '').filter(Boolean); const to = emails.join(','); const writerLines = (d.writers || []).filter(w => w.name).map((w, i) => `  ${i + 1}. ${w.name}${w.ipi ? ' | IPI: ' + w.ipi : ''}${w.pro ? ' | PRO: ' + w.pro : ''}${w.pct ? ' | Share: ' + w.pct + '%' : ''}`).join('\n'); const pubLines = (d.publishers || []).filter(p => p.name).map((p, i) => `  ${i + 1}. ${p.name}${p.ipi ? ' | IPI: ' + p.ipi : ''}${p.pro ? ' | PRO: ' + p.pro : ''}${p.pct ? ' | Share: ' + p.pct + '%' : ''}`).join('\n'); const subject = `Song info — "${d.title}"`; const body = `Here's the current song info for "${d.title}" for your records.\n\nTitle: ${d.title||'—'}\nDuration: ${d.duration||'—'}\nGenre: ${d.genre||'—'}\nLanguage: ${d.language||'English'}\n\nWRITERS:\n${writerLines||'  None listed'}\n${pubLines?'\nPUBLISHERS:\n'+pubLines:''}\n\nPlease let me know if anything looks off.\n\n— ${getAdminSettings().signoff || (document.getElementById('my_name')?.value||'')}`; openMail(to, getAdminSettings().cc || '', subject, body); }
 function clearForm() {
   editingIndex = -1; pendingRespondedWriters.clear(); ['songTitle','altTitle','iswc','duration','releaseDate','dateOfCreation','upc','isrc','album','lyrics','bpm','key','instrumentation','mood'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const md = document.getElementById('moreDetails'); if(md) md.open = false;
@@ -796,7 +817,7 @@ function renderOutreach() {
         <div class="field"><label>Phone</label><input type="tel" placeholder="(615) 000-0000" value="${esc(phone)}" onchange="saveContact(${parseInt(idx)},'${safeName}','phone',this.value)" id="phone_${safeId}"></div>
         <div class="field"><label>Email</label><input type="email" placeholder="their@email.com" value="${esc(outreachEmail)}" onchange="saveContact(${parseInt(idx)},'${safeName}','email',this.value)" id="email_${safeId}"></div>
       </div>
-      ${!isNoResponse ? `<div class="method-pills"><button class="mpill ${mode==='text'?'active':''}" onclick="setMode('${safeName}','text',this.parentElement)">Text</button><button class="mpill ${mode==='email'?'active':''}" onclick="setMode('${safeName}','email',this.parentElement)">Email</button><button class="mpill ${mode==='both'?'active':''}" onclick="setMode('${safeName}','both',this.parentElement)">Both</button><button class="mpill ${mode==='link'?'active':''}" onclick="setMode('${safeName}','link',this.parentElement)">Link only</button></div><div class="msg-preview" id="msgprev_${safeId}"></div><div class="btn-row">${mode==='text'||mode==='both'?`<button class="btn gold" onclick="openSms('${smsHref.replace(/'/g,"\\'")}')">Open in Messages</button>`:''}${mode==='email'||mode==='both'?`<button class="btn primary" onclick="openGmail('${safeId}')">Open in Gmail</button>`:''}<button class="btn" onclick="copyText('${prefilledUrl.replace(/'/g,"\\'")}',this)">Copy Link</button><button class="btn success" onclick="markStatus(${parseInt(idx)},'${safeName}','invited',this)">Mark Invited</button>${outreach.status==='invited'?`<button class="btn" onclick="markStatus(${parseInt(idx)},'${safeName}','responded',this)">Mark Responded</button>`:''}<button class="btn" style="font-size:11px;color:var(--ink-muted);border-style:dashed;" onclick="toggleNoResponseNeeded(${parseInt(idx)},'${safeName}',this)">✓ No response needed</button></div>` : ''}`;
+      ${!isNoResponse ? `<div class="method-pills"><button class="mpill ${mode==='text'?'active':''}" onclick="setMode('${safeName}','text',this.parentElement)">Text</button><button class="mpill ${mode==='email'?'active':''}" onclick="setMode('${safeName}','email',this.parentElement)">Email</button><button class="mpill ${mode==='both'?'active':''}" onclick="setMode('${safeName}','both',this.parentElement)">Both</button><button class="mpill ${mode==='link'?'active':''}" onclick="setMode('${safeName}','link',this.parentElement)">Link only</button></div><div class="msg-preview" id="msgprev_${safeId}"></div><div class="btn-row">${mode==='text'||mode==='both'?`<button class="btn gold" onclick="openSms('${smsHref.replace(/'/g,"\\'")}')">Open in Messages</button>`:''}${mode==='email'||mode==='both'?`<button class="btn primary" onclick="openGmail('${safeId}')">${mailBtnLabel()}</button>`:''}<button class="btn" onclick="copyText('${prefilledUrl.replace(/'/g,"\\'")}',this)">Copy Link</button><button class="btn success" onclick="markStatus(${parseInt(idx)},'${safeName}','invited',this)">Mark Invited</button>${outreach.status==='invited'?`<button class="btn" onclick="markStatus(${parseInt(idx)},'${safeName}','responded',this)">Mark Responded</button>`:''}<button class="btn" style="font-size:11px;color:var(--ink-muted);border-style:dashed;" onclick="toggleNoResponseNeeded(${parseInt(idx)},'${safeName}',this)">✓ No response needed</button></div>` : ''}`;
     if(!window._gmailLinks) window._gmailLinks = {};
     window._gmailLinks[safeId] = mailHref;
     if(!isNoResponse) { const prev = card.querySelector(`#msgprev_${safeId}`); if(prev) prev.textContent = previewText; }
