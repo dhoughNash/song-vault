@@ -358,6 +358,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 <div id="authOverlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:center;">
   <div style="text-align:center;padding:2rem;width:300px;">
     <img src="logo.png" alt="Song Vault" width="160" height="160" style="display:block;margin:0 auto 14px;width:160px;height:160px;border-radius:50%;">
+    <div id="authFormWrap">
     <div class="auth-sub" id="authSubtitle">Sign in to your vault</div>
     <input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
     <input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" style="margin-bottom:12px;">
@@ -365,6 +366,16 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
     <div id="authError" style="color:#E4572E;font-size:12px;margin-top:4px;margin-bottom:10px;font-family:'DM Sans',sans-serif;display:none;"></div>
     <div style="font-size:12px;font-family:'DM Sans',sans-serif;">
       <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:#0B3C8A;text-decoration:underline;">Need an account? Sign up</a>
+    </div>
+    </div>
+    <div id="authCheckInbox" style="display:none;">
+      <div class="auth-title" style="font-size:30px;margin-bottom:14px;">Check your inbox</div>
+      <p style="font-size:14px;line-height:1.6;color:var(--ink);margin-bottom:6px;">We sent a confirmation link to</p>
+      <p id="authSentTo" style="font-size:15px;font-weight:600;color:var(--blue);word-break:break-all;margin-bottom:12px;"></p>
+      <p style="font-size:13px;line-height:1.6;color:var(--ink-light);margin-bottom:18px;">Tap the link in that email to activate your account, then come back here and sign in. If you don&rsquo;t see it within a minute, check your spam or junk folder.</p>
+      <button onclick="authBackToSignIn()" class="auth-btn">Back to Sign In</button>
+      <button onclick="resendConfirmation()" id="authResendBtn" class="auth-btn" style="background:transparent;color:var(--ink);border-color:var(--ink);">Resend email</button>
+      <div id="authResendMsg" style="font-size:12px;min-height:16px;margin-top:4px;font-family:'DM Sans',sans-serif;"></div>
     </div>
     <div style="margin-top:18px;font-size:11px;line-height:1.6;font-family:'DM Sans',sans-serif;color:var(--ink-muted);">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</div>
   </div>
@@ -400,6 +411,31 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 </div>
 <script>
 let authMode = 'signin';
+let pendingConfirmEmail = '';
+function showCheckInbox(email) {
+  pendingConfirmEmail = email;
+  document.getElementById('authSentTo').textContent = email;
+  document.getElementById('authResendMsg').textContent = '';
+  document.getElementById('authFormWrap').style.display = 'none';
+  document.getElementById('authCheckInbox').style.display = 'block';
+}
+function authBackToSignIn() {
+  document.getElementById('authCheckInbox').style.display = 'none';
+  document.getElementById('authFormWrap').style.display = 'block';
+  if(authMode === 'signup') toggleAuthMode();
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authEmail').value = pendingConfirmEmail;
+}
+async function resendConfirmation() {
+  const btn = document.getElementById('authResendBtn'), msg = document.getElementById('authResendMsg');
+  btn.disabled = true; msg.style.color = 'var(--ink-muted)'; msg.textContent = 'Sending...';
+  try {
+    const { error } = await supabaseClient.auth.resend({ type: 'signup', email: pendingConfirmEmail, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+    if(error) throw error;
+    msg.style.color = 'var(--blue)'; msg.textContent = '\u2713 Sent again. Check your inbox.';
+  } catch(e) { msg.style.color = '#E4572E'; msg.textContent = e.message || 'Could not resend. Try again in a minute.'; }
+  setTimeout(() => { btn.disabled = false; }, 30000);
+}
 function toggleAuthMode() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   document.getElementById('authSubtitle').textContent = authMode === 'signin' ? 'Sign in to your vault' : 'Create your account';
@@ -423,12 +459,17 @@ async function submitAuth() {
       const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
       if(error) throw error;
       if(data.session) { await onAuthReady(data.session); }
-      else { errEl.style.color = 'var(--sage,#0B3C8A)'; errEl.textContent = 'Check your email to confirm your account, then sign in.'; errEl.style.display = 'block'; toggleAuthMode(); }
+      else if(data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        // Supabase returns no error (to avoid revealing accounts) when the email is already registered
+        errEl.textContent = 'That email already has an account. Try signing in instead.'; errEl.style.display = 'block'; toggleAuthMode();
+        errEl.style.display = 'block';
+      }
+      else { showCheckInbox(email); }
     }
   } catch(e) {
     errEl.style.color = '#E4572E'; errEl.textContent = e.message || 'Something went wrong.'; errEl.style.display = 'block';
   } finally {
-    btn.disabled = false; btn.textContent = origText;
+    btn.disabled = false; btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
   }
 }
 </script>
