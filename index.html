@@ -881,10 +881,13 @@ function isMobile(){ return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent
 const MAIL_CLIENTS = { gmail:'Gmail (web)', outlook:'Outlook / Microsoft 365 (web)', yahoo:'Yahoo Mail (web)', default:'Default mail app (Apple Mail, desktop Outlook, phone mail app)', copy:'Just copy the email so I can paste it' };
 function getMailClient() { try { const c = localStorage.getItem('srh_mail_client'); return MAIL_CLIENTS[c] ? c : ''; } catch(e) { return ''; } }
 function setMailClient(c) { try { if(c) localStorage.setItem('srh_mail_client', c); } catch(e) {} }
-function mailBtnLabel() { const c = getMailClient(); return c==='gmail' ? 'Open in Gmail' : c==='outlook' ? 'Open in Outlook' : c==='yahoo' ? 'Open in Yahoo Mail' : c==='copy' ? 'Copy Email' : 'Open in Email'; }
+function mailBtnLabel() { const c = getMailClient(); if(isMobile() && c!=='copy') return 'Open in Email'; return c==='gmail' ? 'Open in Gmail' : c==='outlook' ? 'Open in Outlook' : c==='yahoo' ? 'Open in Yahoo Mail' : c==='copy' ? 'Copy Email' : 'Open in Email'; }
 function syncMailClientSelect() { const el = document.getElementById('my_mail_client'); if(el) el.value = getMailClient(); }
+function buildMailtoHref(to, cc, su, body) { const q = encodeURIComponent; return `mailto:${to}?subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`; }
 function sendViaMailClient(client, to, cc, su, body) {
   const q = encodeURIComponent;
+  // On a phone, web Gmail/Outlook/Yahoo just open a browser tab. Use mailto: so the phone's own default mail app opens with everything filled in.
+  if(isMobile() && client !== 'copy') { window.location.href = buildMailtoHref(to, cc, su, body); return; }
   if(client === 'gmail') { window.open(`https://mail.google.com/mail/?view=cm&to=${q(to)}&su=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
   else if(client === 'outlook') { window.open(`https://outlook.office.com/mail/deeplink/compose?to=${q(to)}&subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
   else if(client === 'yahoo') { window.open(`https://compose.mail.yahoo.com/?to=${q(to)}&subject=${q(su)}&body=${q(body)}${cc?'&cc='+q(cc):''}`, '_blank'); }
@@ -893,6 +896,7 @@ function sendViaMailClient(client, to, cc, su, body) {
 }
 function openMail(to, cc, su, body) {
   const client = getMailClient();
+  if(isMobile() && client !== 'copy') { sendViaMailClient('default', to, cc, su, body); return; }
   if(client) { sendViaMailClient(client, to, cc, su, body); return; }
   const old = document.getElementById('mailChooser'); if(old) old.remove();
   const ov = document.createElement('div'); ov.id = 'mailChooser';
