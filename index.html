@@ -316,8 +316,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
   .next-step { font-size: 13px; margin-top: 6px; }
   .song-body > div:last-child { display: flex !important; flex-direction: column; align-items: stretch !important; gap: 10px !important; margin-top: 12px; }
   .badge { font-size: 11px; padding: 4px 10px; }
-  .song-body > div:last-child > div:last-child { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; width: 100%; }
-  .song-body > div:last-child > div:last-child .btn { width: 100% !important; min-width: 0; font-size: 13px !important; padding: 0 6px !important; min-height: 48px; }
+  .song-body > div:last-child > div:last-child { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px !important; width: 100%; }
+  .song-body > div:last-child > div:last-child .btn { width: 100% !important; min-width: 0; font-size: 11px !important; letter-spacing: 0.5px !important; padding: 0 4px !important; min-height: 36px; border-width: 1.5px; white-space: nowrap; }
+  /* Duplicate is a quiet text link under the three Mark buttons */
+  .song-body > div:last-child > div:last-child .btn:nth-child(4) { grid-column: 1 / -1; min-height: 28px; border: none; background: transparent; color: var(--ink-muted); text-decoration: underline; font-size: 11px !important; justify-content: flex-start; padding: 0 !important; }
 
   /* ---- Co-writer outreach ---- */
   .outreach-card { padding: 16px; }
