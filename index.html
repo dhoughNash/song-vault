@@ -366,8 +366,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
     <input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" style="margin-bottom:12px;">
     <button onclick="submitAuth()" id="authSubmitBtn" class="auth-btn">Sign In</button>
     <div id="authError" style="color:#E4572E;font-size:12px;margin-top:4px;margin-bottom:10px;font-family:'DM Sans',sans-serif;display:none;"></div>
-    <div style="font-size:12px;font-family:'DM Sans',sans-serif;">
-      <a href="#" id="authToggleLink" onclick="toggleAuthMode();return false;" style="color:#0B3C8A;text-decoration:underline;">Need an account? Sign up</a>
+    <div id="authToggleBox" style="margin-top:18px;padding-top:16px;border-top:2px solid var(--ink);">
+      <div id="authToggleLead" style="font-family:'Anton',sans-serif;font-size:22px;line-height:1.1;text-transform:uppercase;color:var(--red);margin-bottom:6px;">New here?</div>
+      <div id="authToggleSub" style="font-size:14px;line-height:1.5;color:var(--ink);margin-bottom:12px;">Create a free account to get started.</div>
+      <button type="button" id="authToggleLink" onclick="toggleAuthMode();return false;" class="auth-btn" style="background:var(--red);border-color:var(--ink);color:#fff;min-height:50px;font-size:14px;letter-spacing:1px;white-space:nowrap;margin-bottom:0;">Create Free Account</button>
     </div>
     </div>
     <div id="authCheckInbox" style="display:none;">
@@ -442,7 +444,11 @@ function toggleAuthMode() {
   authMode = authMode === 'signin' ? 'signup' : 'signin';
   document.getElementById('authSubtitle').textContent = authMode === 'signin' ? 'Sign in to your vault' : 'Create your account';
   document.getElementById('authSubmitBtn').textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up';
-  document.getElementById('authToggleLink').textContent = authMode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in';
+  const tl = document.getElementById('authToggleLink'), su = authMode === 'signup';
+  document.getElementById('authToggleLead').textContent = su ? 'Already have an account?' : 'New here?';
+  document.getElementById('authToggleSub').textContent = su ? 'Sign in with your email and password.' : 'Create a free account to get started.';
+  tl.textContent = su ? 'Back to Sign In' : 'Create Free Account';
+  tl.style.background = su ? 'transparent' : 'var(--red)'; tl.style.color = su ? 'var(--ink)' : '#fff';
   document.getElementById('authError').style.display = 'none';
 }
 async function submitAuth() {
