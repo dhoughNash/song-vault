@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Song Vault">
 <link rel="manifest" href="manifest.webmanifest">
-<title>The SongSubHub</title>
+<title>Song Vault</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -364,6 +364,10 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
     <div class="auth-sub" id="authSubtitle">Sign in to your vault</div>
     <input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
     <input type="password" id="authPassword" class="auth-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" style="margin-bottom:12px;">
+    <label id="authTermsWrap" style="display:none;text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.5;color:var(--ink);margin:0 0 12px;cursor:pointer;">
+      <input type="checkbox" id="authTermsCheck" style="width:auto;margin:2px 8px 0 0;float:left;transform:scale(1.15);">
+      <span style="display:block;overflow:hidden;">I have read and agree to the <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</span>
+    </label>
     <button onclick="submitAuth()" id="authSubmitBtn" class="auth-btn">Sign In</button>
     <div id="authError" style="color:#E4572E;font-size:12px;margin-top:4px;margin-bottom:10px;font-family:'DM Sans',sans-serif;display:none;"></div>
     <div id="authToggleBox" style="margin-top:18px;padding-top:16px;border-top:2px solid var(--ink);">
@@ -381,7 +385,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
       <button onclick="resendConfirmation()" id="authResendBtn" class="auth-btn" style="background:transparent;color:var(--ink);border-color:var(--ink);">Resend email</button>
       <div id="authResendMsg" style="font-size:12px;min-height:16px;margin-top:4px;font-family:'DM Sans',sans-serif;"></div>
     </div>
-    <div style="margin-top:18px;font-size:11px;line-height:1.6;font-family:'DM Sans',sans-serif;color:var(--ink-muted);">By continuing you agree to our <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</div>
+    <div id="authSigninNote" style="margin-top:18px;font-size:11px;line-height:1.6;font-family:'DM Sans',sans-serif;color:var(--ink-muted);">By signing in you agree to our <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</div>
   </div>
 </div>
 <div id="publicSubmitView" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:2rem 1rem;background:var(--cream);">
@@ -403,8 +407,11 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
         <div class="field"><label>Email</label><input type="email" id="pub_email" placeholder="your@email.com"></div>
         <div class="field"><label>Phone</label><input type="tel" id="pub_phone" placeholder="(615) 000-0000"></div>
       </div>
+      <label style="display:block;text-align:left;font-size:12px;line-height:1.5;color:var(--ink);margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="pub_consent" style="width:auto;margin:2px 8px 0 0;float:left;transform:scale(1.15);">
+        <span style="display:block;overflow:hidden;">I confirm this information is accurate. I agree that Song Vault may store it and share it with the songwriter who invited me so they can register this song, and that they may contact me about it at the email or phone number I gave. I agree to the <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a> (see &ldquo;Co-writer Submissions&rdquo;) and <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a>.</span>
+      </label>
       <button class="btn gold" style="width:100%;padding:12px;font-size:14px;" onclick="submitPublicCoWriterInfo()">Submit My Info</button>
-      <div style="font-size:11px;color:var(--ink-muted);line-height:1.6;margin-top:10px;">Your info goes to the songwriter who invited you so they can register this song. See our <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--blue);">Privacy Policy</a> and <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a>.</div>
       <div id="publicFormError" style="color:var(--rust);font-size:12px;margin-top:10px;display:none;"></div>
     </div>
     <div id="publicFormThanks" style="display:none;text-align:center;padding:1rem 0;">
@@ -450,13 +457,17 @@ function toggleAuthMode() {
   tl.textContent = su ? 'Back to Sign In' : 'Create Free Account';
   tl.style.background = su ? 'transparent' : 'var(--red)'; tl.style.color = su ? 'var(--ink)' : '#fff';
   document.getElementById('authError').style.display = 'none';
+  const tw = document.getElementById('authTermsWrap'); if(tw) tw.style.display = su ? 'block' : 'none';
+  const sn = document.getElementById('authSigninNote'); if(sn) sn.style.display = su ? 'none' : 'block';
 }
+const TERMS_VERSION = '2026-11-16';
 async function submitAuth() {
   const email = document.getElementById('authEmail').value.trim();
   const password = document.getElementById('authPassword').value;
   const errEl = document.getElementById('authError');
   errEl.style.color = '#E4572E'; errEl.style.display = 'none';
   if(!email || !password) { errEl.textContent = 'Enter both email and password.'; errEl.style.display = 'block'; return; }
+  if(authMode === 'signup' && !document.getElementById('authTermsCheck')?.checked) { errEl.textContent = 'Please check the box to agree to the Terms of Service and Privacy Policy.'; errEl.style.display = 'block'; return; }
   const btn = document.getElementById('authSubmitBtn'); btn.disabled = true; const origText = btn.textContent; btn.textContent = 'Please wait...';
   try {
     if(authMode === 'signin') {
@@ -464,7 +475,7 @@ async function submitAuth() {
       if(error) throw error;
       await onAuthReady(data.session);
     } else {
-      const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+      const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + window.location.pathname, data: { terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION } } });
       if(error) throw error;
       if(data.session) { await onAuthReady(data.session); }
       else if(data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
@@ -1146,7 +1157,7 @@ function renderPlansPage() {
   if(fa) fa.innerHTML = paid ? '' : `<div class="hint" style="margin:0;">${songs.length} of ${getSongLimit()} songs used</div>`;
   if(pa) pa.innerHTML = paid
     ? `<button class="btn" style="width:100%;" onclick="openBillingPortal()">Manage / Cancel subscription</button>`
-    : `<button class="btn gold" style="width:100%;" onclick="openSubscribeLink()">Subscribe</button><button class="btn" style="width:100%;margin-top:8px;" onclick="refreshSubscriptionStatus(true)">&#8635; I just subscribed &mdash; check again</button>`;
+    : `<button class="btn gold" style="width:100%;" onclick="openSubscribeLink()">Subscribe</button><div class="hint" style="margin:8px 0 0;font-size:11px;line-height:1.5;">$4.99 per month, billed monthly. Renews automatically each month until you cancel. Cancel anytime with &ldquo;Manage / Cancel subscription&rdquo;; cancellation takes effect at the end of the billing period. See our <a href="terms.html" target="_blank" rel="noopener" style="color:var(--blue);">Terms of Service</a>.</div><button class="btn" style="width:100%;margin-top:8px;" onclick="refreshSubscriptionStatus(true)">&#8635; I just subscribed &mdash; check again</button>`;
 }
 function renderSubscriptionStatus() {
   renderPlansPage();
@@ -1230,6 +1241,7 @@ async function submitPublicCoWriterInfo() {
   const name = document.getElementById('pub_name').value.trim();
   const errEl = document.getElementById('publicFormError'); errEl.style.display = 'none';
   if(!name) { errEl.textContent = 'Please enter your name.'; errEl.style.display = 'block'; return; }
+  if(!document.getElementById('pub_consent')?.checked) { errEl.textContent = 'Please check the box to agree before submitting.'; errEl.style.display = 'block'; return; }
   const pubs = collectPublicPublishers();
   if(pubs.length > 1) {
     const total = Math.round(pubs.reduce((a, p) => a + (parseFloat(p.split) || 0), 0) * 100) / 100;
