@@ -797,6 +797,7 @@ function supaHeaders(extra={}) {
 async function signOutUser() {
   await supabaseClient.auth.signOut();
   currentUser = null; currentSession = null;
+  resetAccountCache(); try { localStorage.removeItem('srh_owner'); } catch(e) {}
   document.getElementById('authEmail').value = ''; document.getElementById('authPassword').value = '';
   document.getElementById('authOverlay').style.display = 'flex';
 }
@@ -842,6 +843,21 @@ async function deleteSongFromSupabase(songId) { try { await supaFetch(`/songs?id
 let songs = JSON.parse(localStorage.getItem('srh_songs') || '[]');
 let selectedOrgs = new Set(['mlc','sesac']); let editingIndex = -1; let outreachModes = {}; let vaultSort = 'recent'; let pendingRespondedWriters = new Set();
 let activeWriterId = localStorage.getItem('srh_activeWriter') || null; let writersList = []; let knownCoWriters = [];
+// Everything cached in this browser that belongs to ONE account. It must never carry over to a different
+// account that signs in on the same browser (the New Song form pre-fills from it).
+function resetAccountCache() {
+  ['srh_settings','srh_myinfo','srh_songs','srh_activeWriter'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+  activeWriterId = null; writersList = []; knownCoWriters = []; songs = []; lastSongsSync = null;
+  document.querySelectorAll('[id^="my_"]').forEach(el => { if(el.type !== 'file' && el.type !== 'button') el.value = ''; });
+  const lang = document.getElementById('my_language'); if(lang) lang.value = 'English';
+  const picker = document.getElementById('writerPicker'); if(picker) picker.innerHTML = '';
+  try { updateWriterNameLabel(); } catch(e) {}
+}
+// If the account signing in is not the one whose data is cached here, wipe the cache first.
+function ensureCacheBelongsTo(userId) {
+  let owner = null; try { owner = localStorage.getItem('srh_owner'); } catch(e) {}
+  if(owner !== userId) { resetAccountCache(); try { localStorage.setItem('srh_owner', userId); } catch(e) {} }
+}
 async function loadWriters() {
   try { const all = await supaFetch(`/writers?user_id=eq.${currentUser?.id}&order=name.asc`); writersList = all.filter(w => w.active !== false); const picker = document.getElementById('writerPicker'); picker.innerHTML = writersList.map(w => `<option value="${w.id}">${w.name}</option>`).join(''); if(activeWriterId && writersList.find(w => w.id === activeWriterId)) { picker.value = activeWriterId; } else if(writersList.length > 0) { activeWriterId = writersList[0].id; picker.value = activeWriterId; localStorage.setItem('srh_activeWriter', activeWriterId); } applyActiveWriter(); renderManageWriters(all); }
   catch(e) { console.warn('Could not load writers:', e.message); }
@@ -1068,9 +1084,9 @@ function renderOutreach() {
     const outreach=(s.outreach||{})[w.name]||{status:'not-sent',phone:'',email:''};
     const isNoResponse = outreach.status === 'no_response_needed';
     const mode=outreachModes[w.name]||'text'; const firstName=w.name.split(' ')[0]; const songTitle=s.title;
-    const textMsg=`Hey ${firstName}! Mason Douglas here. Can you fill out your writer info for "${songTitle}"? Takes 2 mins: ${prefilledUrl}`;
+    const senderName=((writersList.find(x=>x.id===activeWriterId)||{}).name||getMyInfo().name||'').trim(); const textMsg=`Hey ${firstName}! ${senderName?senderName+' here. ':''}Can you fill out your writer info for "${songTitle}"? Takes 2 mins: ${prefilledUrl}`;
     const emailSubject=`Writer info needed — ${songTitle}`;
-    const emailBody=`Hi ${firstName},\n\nI'm registering "${songTitle}" and need your writer details (IPI, PRO, share %). Could you fill this out when you get a chance?\n\n${prefilledUrl}\n\nTakes about 2 minutes. Thanks!\n\nMason Douglas`;
+    const emailBody=`Hi ${firstName},\n\nI'm registering "${songTitle}" and need your writer details (IPI, PRO, share %). Could you fill this out when you get a chance?\n\n${prefilledUrl}\n\nTakes about 2 minutes. Thanks!${senderName?'\n\n'+senderName:''}`;
     const safeId=w.name.replace(/[^a-zA-Z0-9]/g,'_');
     const statusDot=outreach.status==='responded'?'dot-green':outreach.status==='invited'?'dot-amber':isNoResponse?'dot-muted':'dot-gray';
     const statusLabel=outreach.status==='responded'?'Responded':outreach.status==='invited'?'Invited':isNoResponse?'No response needed':'Not contacted';
@@ -1354,6 +1370,7 @@ async function joinAppAccess() {
 async function startApp() {
   if(appStarted) return; appStarted = true;
   document.getElementById('authOverlay').style.display = 'none';
+  if(currentUser?.id) ensureCacheBelongsTo(currentUser.id);
   await joinAppAccess();
   clearForm();
   loadAllSettings().then(() => { clearForm(); });
@@ -1374,6 +1391,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     if(session && !appStarted) startApp();
   } else if(event === 'SIGNED_OUT') {
     currentSession = null; currentUser = null; appStarted = false;
+    resetAccountCache(); try { localStorage.removeItem('srh_owner'); } catch(e) {}
     document.getElementById('authOverlay').style.display = 'flex';
   }
 });
