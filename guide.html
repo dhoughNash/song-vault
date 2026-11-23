@@ -3,155 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SongSubHub Quick Guide</title>
+<title>Song Vault Help</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one sheet, 2x2 steps, then a legend strip and a short tips block. Look follows the app: cream, ink, blue = filed, red = still to do. */
 :root{
   --bg:#F2E9D8; --paper:#FFFBF0; --ink:#1A1A1A; --muted:#5E5646;
   --blue:#0B3C8A; --red:#E4572E; --blue-soft:#DDE5F2; --line:#1A1A1A; --on-block:#F2E9D8;
   --f-display:'Anton','Impact',sans-serif; --f-label:'Oswald','Arial Narrow',sans-serif; --f-body:'DM Sans',system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#16140F;--paper:#201D15;--ink:#F2E9D8;--muted:#B5AB97;--blue:#8FB0EC;--red:#FF7B54;--blue-soft:#1F2A44;--line:#F2E9D8;--on-block:#F2E9D8;color-scheme:dark}
+  :root:not([data-theme="light"]){--bg:#16140F;--paper:#201D15;--ink:#F2E9D8;--muted:#B5AB97;--blue:#8FB0EC;--red:#FF7B54;--blue-soft:#1F2A44;--line:#F2E9D8;--on-block:#16140F;color-scheme:dark}
 }
-:root[data-theme="dark"]{--bg:#16140F;--paper:#201D15;--ink:#F2E9D8;--muted:#B5AB97;--blue:#8FB0EC;--red:#FF7B54;--blue-soft:#1F2A44;--line:#F2E9D8;--on-block:#F2E9D8;color-scheme:dark}
+:root[data-theme="dark"]{--bg:#16140F;--paper:#201D15;--ink:#F2E9D8;--muted:#B5AB97;--blue:#8FB0EC;--red:#FF7B54;--blue-soft:#1F2A44;--line:#F2E9D8;--on-block:#16140F;color-scheme:dark}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:24px 32px}
-.sheet{max-width:920px;margin-inline:auto}
-header{border-bottom:6px solid var(--ink);padding-bottom:12px;margin-bottom:18px}
-h1{font:400 40px/1 var(--f-display);text-transform:uppercase;color:var(--blue);text-shadow:2px 2px 0 var(--red);letter-spacing:.5px;text-wrap:balance}
-.lede{margin-top:8px;color:var(--muted);max-width:60ch}
-.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.step{background:var(--paper);border:2px solid var(--line);padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:8px}
-.step h2{font:400 21px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:10px}
-.num{flex:none;width:28px;height:28px;background:var(--blue);color:var(--on-block);font:400 16px/28px var(--f-display);text-align:center}
-.step p{max-width:56ch}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--f-body);padding-inline:16px;padding-block:24px 40px}
+.sheet{max-width:760px;margin-inline:auto}
+header{border-bottom:6px solid var(--ink);padding-bottom:14px;margin-bottom:22px}
+h1{font:400 42px/1 var(--f-display);text-transform:uppercase;color:var(--blue);text-shadow:2px 2px 0 var(--red);letter-spacing:.5px;text-wrap:balance}
+.lede{margin-top:8px;color:var(--muted)}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.jump a{border:2px solid var(--line);background:var(--paper);padding:5px 12px;font:500 13px/1.2 var(--f-label);letter-spacing:.8px;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.jump a:hover,.jump a:focus-visible{background:var(--blue);color:var(--on-block);border-color:var(--blue)}
+section{margin-top:30px;scroll-margin-top:12px}
+h2{font:400 26px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;padding-bottom:6px;border-bottom:3px solid var(--red)}
+.steps{display:grid;gap:14px}
+.step{background:var(--paper);border:2px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.step h3{font:400 21px/1.15 var(--f-display);text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:10px}
+.num{flex:none;min-width:30px;height:30px;padding-inline:4px;background:var(--blue);color:var(--on-block);font:400 16px/30px var(--f-display);text-align:center}
+.step p{max-width:62ch}
+.step img{display:block;width:100%;height:auto;border:2px solid var(--line);background:var(--bg)}
+.tip{border-left:6px solid var(--red);background:var(--blue-soft);padding:8px 12px;font-size:15px}
 b{font-weight:700}
-/* drawn copies of the real screen */
-.mock{border:2px dashed var(--line);background:var(--bg);padding:10px;display:flex;flex-direction:column;gap:6px;font-size:12px;pointer-events:none;margin-top:auto}
-.btn{display:inline-block;border:2px solid var(--line);background:var(--paper);padding:3px 8px;font:500 11px/1.3 var(--f-label);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
-.btn.gold{background:var(--blue);color:var(--on-block);border-color:var(--blue)}
-.btn.hit{outline:3px solid var(--red);outline-offset:2px}
-.btns{display:flex;gap:6px;flex-wrap:wrap}
-.fields{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px}
-.fields span{border:1px solid var(--line);background:var(--paper);padding:2px 5px;color:var(--muted);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tot{font:500 11px var(--f-label);letter-spacing:1px;text-transform:uppercase;color:var(--blue)}
-.pend{border:2px solid var(--blue);background:var(--paper);padding:7px 9px}
-.pend .who{font-weight:700}
-.pend small{display:block;color:var(--muted);font-size:10.5px;margin:1px 0 5px}
-.song{display:flex;border:2px solid var(--line);background:var(--paper)}
-.blk{width:46px;flex:none;display:flex;flex-direction:column}
-.blk div{flex:1;min-height:24px;display:grid;place-items:center;color:var(--on-block);font:400 10px var(--f-label);letter-spacing:1px}
-.blk div+div{border-top:2px solid var(--bg)}
-.done{background:var(--blue)} .todo{background:var(--red)}
-.song .body{padding:6px 9px;min-width:0}
-.song .t{font:700 13px var(--f-body)}
-.nx{font:400 11px var(--f-label);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
-.nx.todo-t{color:var(--red)} .nx.done-t{color:var(--blue)}
-.legend{margin-top:14px;background:var(--paper);border:2px solid var(--line);padding:14px 16px}
-.legend h2,.tips h2{font:400 21px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px}
-.lgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:center}
-.lgrid ul{list-style:none;display:grid;gap:6px}
-.sw{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px}
-.tips{margin-top:14px;background:var(--blue-soft);border:2px solid var(--line);padding:14px 16px}
-.tips ul{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 22px}
-.tips li{padding-left:16px;position:relative}
-.tips li:before{content:"";position:absolute;left:0;top:.55em;width:8px;height:8px;background:var(--red)}
-.help{margin-top:14px;border:2px solid var(--line);background:var(--paper);padding:12px 16px;font:400 18px/1.3 var(--f-display);text-transform:uppercase;letter-spacing:.4px}
+.help{margin-top:30px;border:2px solid var(--line);background:var(--paper);padding:12px 16px;font:400 18px/1.3 var(--f-display);text-transform:uppercase;letter-spacing:.4px}
 .help a{color:var(--blue);text-decoration:underline}
-@media (max-width:680px){
-  h1{font-size:30px}
-  .steps,.lgrid,.tips ul{grid-template-columns:minmax(0,1fr)}
-}
+@media (max-width:560px){h1{font-size:32px}h2{font-size:22px}}
+
 </style>
 </head>
 <body>
-
 <div class="sheet">
   <header>
-    <h1>The SongSubHub</h1>
-    <p class="lede">Your song filing cabinet. Save a song once, collect your co-writers' info, then send it where it needs to go.</p>
+    <h1>Song Vault Help</h1>
+    <p class="lede">One step at a time. Find what you want to do and follow the picture.</p>
+    <nav class="jump" aria-label="Jump to a section">
+      <a href="#start">Set up once</a><a href="#add">Add a song</a><a href="#cowriters">Get your co-writers' info</a><a href="#file">File your songs</a><a href="#everyday">Everyday things</a>
+    </nav>
   </header>
 
-  <div class="steps">
-
-    <section class="step">
-      <h2><span class="num">1</span>Add a song</h2>
-      <p>On the Song Vault, tap <b>+ New Song</b>. Type the title. Add each writer and the % they own. Add publishers too. Each list must add up to <b>100%</b>. Then tap <b>Save to Vault</b>.</p>
-      <div class="mock">
-        <div class="btns"><span class="btn gold hit">+ New Song</span></div>
-        <div class="fields"><span>Mason Douglas</span><span>IPI #</span><span>SESAC</span><span>50</span></div>
-        <div class="fields"><span>Co-writer</span><span>IPI #</span><span>BMI</span><span>50</span></div>
-        <div class="tot">Writer shares: 100% ✓</div>
-      </div>
-    </section>
-
-    <section class="step">
-      <h2><span class="num">2</span>Send co-writers a link</h2>
-      <p>Open your song and tap <b>Invite Co-writers</b>. Pick text, email, or copy the link. Each co-writer gets a short page to fill out. They don't need an account.</p>
-      <div class="mock">
-        <div class="btns"><span class="btn gold hit">Invite Co-writers →</span><span class="btn">Email song info</span></div>
-        <div class="btns"><span class="btn">Text</span><span class="btn">Email</span><span class="btn">Link only</span><span class="btn">Copy Link</span></div>
-      </div>
-    </section>
-
-    <section class="step">
-      <h2><span class="num">3</span>Merge their answers</h2>
-      <p>When a co-writer hits Submit, their info shows up at the top of the Song Vault. Tap <b>Merge into Vault</b> to add it to the song. Tap <b>Dismiss</b> if it's not right. The gear shows a number when something is waiting.</p>
-      <div class="mock">
-        <div class="pend">
-          <div class="who">Pending Co-writer Submissions</div>
-          <small>Co-writer name · IPI · PRO · 50% · publisher · email</small>
-          <div class="btns"><span class="btn gold hit">Merge into Vault</span><span class="btn">Dismiss</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="step">
-      <h2><span class="num">4</span>File it</h2>
-      <p>Tap <b>Export &amp; Submit</b> at the top of the Song Vault. Choose <b>Export unsubmitted songs</b> for SESAC or MLC. A spreadsheet downloads. Upload it on their site with the <b>Open</b> button. Back in the Vault, tap <b>Mark SESAC</b> or <b>Mark MLC</b> so you don't file it twice.</p>
-      <div class="mock">
-        <div class="btns"><span class="btn hit">⇩ Export &amp; Submit</span><span class="btn gold">⇩ Export unsubmitted (SESAC)</span></div>
-        <div class="btns"><span class="btn">Mark Admin</span><span class="btn hit">Mark SESAC</span><span class="btn">Mark MLC</span></div>
-      </div>
-      <p>Songs your admin files for you: in Export &amp; Submit, pick the song and tap <b>Email Admin</b>. Gmail opens with the info filled in. Then tap <b>Mark Admin</b>.</p>
-    </section>
-
-  </div>
-
-  <section class="legend">
-    <h2>Reading a song in the Vault</h2>
-    <div class="lgrid">
-      <div class="song" aria-hidden="true">
-        <div class="blk"><div class="done">SESAC</div><div class="todo">MLC</div></div>
-        <div class="body"><div class="t">Neon Nashville</div><div class="nx todo-t">Needs MLC filing</div></div>
-      </div>
-      <ul>
-        <li><span class="sw done"></span><b>Blue</b> means filed.</li>
-        <li><span class="sw todo"></span><b>Red</b> means still to do.</li>
-        <li>The <b>top half</b> is SESAC. The <b>bottom half</b> is MLC.</li>
-        <li>The small line under the title tells you the next step.</li>
-      </ul>
+  <section id="start">
+    <h2>Set up once</h2>
+    <div class="steps">
+    <article class="step">
+      <h3><span class="num">1</span>Open the menu</h3>
+      <p>Tap the circle in the top right corner. You'll see <b>Plans</b>, <b>Settings</b>, <b>Help</b> and <b>Sign Out</b>.</p>
+      <img src="help/menu.png" alt="The account menu open in the top right" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">2</span>Fill in your info once</h3>
+      <p>Tap <b>Settings</b>. Under <b>My Default Info</b>, type your name, your PRO, your publisher and your IPI numbers. Then tap <b>Save my info</b>. Every new song will start with these filled in.</p>
+      <img src="help/settings.png" alt="The My Default Info section of Settings" loading="lazy">
+      
+    </article>
     </div>
   </section>
-
-  <section class="tips">
-    <h2>Good to know</h2>
-    <ul>
-      <li>The dropdown at the top switches which writer you're working as. <b>+</b> adds one. <b>Manage</b> turns one off.</li>
-      <li>Type a co-writer's name you've used before and their info fills in.</li>
-      <li><b>Duplicate</b> copies a song so you don't retype.</li>
-      <li>Set your own name, IPI and publisher once in the <b>gear</b> under <b>My Default Info</b>. New songs start filled in.</li>
-      <li>Free accounts hold 5 songs. Subscribe in the gear for more.</li>
-      <li>Back up your vault in the gear: <b>Export vault backup</b>.</li>
-      <li>Not seeing something new? Tap <b>Reload</b> at the top of the Vault.</li>
-      <li>MusicMark exports (BMI, ASCAP) are switched off for now.</li>
-    </ul>
+  <section id="add">
+    <h2>Add a song</h2>
+    <div class="steps">
+    <article class="step">
+      <h3><span class="num">3</span>Start a new song</h3>
+      <p>On the Song Vault, tap <b>+ New Song</b>.</p>
+      <img src="help/vault-top.png" alt="The top of the Song Vault with the New Song button" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">4</span>Type the title and date</h3>
+      <p>Type the song title and pick the date you wrote it.</p>
+      <img src="help/entry-title.png" alt="Song title and date fields" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">5</span>Add the writers and publishers</h3>
+      <p>Type each writer's name, PRO and the % they own. Add each publisher the same way. Each list has to total <b>100%</b>. Tap <b>+ Add Writer</b> or <b>+ Add Publisher</b> for more.</p>
+      <img src="help/entry-writers.png" alt="Writers and publishers section" loading="lazy">
+      <p class="tip">SESAC only: if a writer is with SESAC, the total line says "SESAC export: 50%". That's normal.</p>
+    </article>
+    <article class="step">
+      <h3><span class="num">6</span>Save it</h3>
+      <p>Tap <b>Save to Vault</b> at the bottom.</p>
+      <img src="help/entry-buttons.png" alt="Buttons at the bottom of the song form" loading="lazy">
+      
+    </article>
+    </div>
+  </section>
+  <section id="cowriters">
+    <h2>Get your co-writers' info</h2>
+    <div class="steps">
+    <article class="step">
+      <h3><span class="num">7</span>Open the invite page</h3>
+      <p>With your song saved, tap <b>Invite Co-writers →</b> at the bottom of the song.</p>
+      <img src="help/entry-buttons.png" alt="The Invite Co-writers button" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">8</span>Send each co-writer their link</h3>
+      <p>Under each name, pick <b>Text</b>, <b>Email</b>, <b>Both</b> or <b>Link only</b>. Then tap the send button. Your message is already written. Co-writers don't need an account.</p>
+      <img src="help/outreach-send.png" alt="A co-writer&#x27;s card with the send buttons" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">9</span>Tick off anyone you already have</h3>
+      <p>If you typed in a co-writer's info yourself, tap <b>✓ No response needed</b> on their card. The Vault stops waiting on them.</p>
+      <img src="help/outreach-send.png" alt="The No response needed button" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">10</span>Add their answers to your song</h3>
+      <p>When a co-writer sends their info back, a box appears at the top of the Song Vault. Tap <b>Merge into Vault</b> to add it to the song.</p>
+      <img src="help/pending.png" alt="A pending co-writer submission with Merge into Vault and Dismiss" loading="lazy">
+      <p class="tip">Not right? Tap <b>Dismiss</b> instead.</p>
+    </article>
+    </div>
+  </section>
+  <section id="file">
+    <h2>File your songs</h2>
+    <div class="steps">
+    <article class="step">
+      <h3><span class="num">11</span>Open Export &amp; Submit</h3>
+      <p>On the Song Vault, tap <b>Export &amp; Submit</b>.</p>
+      <img src="help/vault-top.png" alt="The Export and Submit button on the Song Vault" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">12</span>Download the file for your PRO</h3>
+      <p>Find the box for your PRO and tap <b>Export unsubmitted songs</b>. A spreadsheet downloads. It only has songs you haven't filed yet.</p>
+      <img src="help/export.png" alt="The Export and Submit page" loading="lazy">
+      <p class="tip">Right now SESAC and The MLC are ready. BMI and ASCAP are coming soon.</p>
+    </article>
+    <article class="step">
+      <h3><span class="num">13</span>Upload it on their website</h3>
+      <p>Tap <b>Open</b> next to the export (<b>Open SESAC</b> or <b>Open MLC</b>). Sign in there and upload the file you just downloaded.</p>
+      <img src="help/export.png" alt="The Open buttons next to each export" loading="lazy">
+      <p class="tip">SESAC: sesac.com → My Account → Song Registration → Bulk Upload. MLC: portal.themlc.com → Works → Bulk Upload.</p>
+    </article>
+    <article class="step">
+      <h3><span class="num">14</span>Mark the song filed</h3>
+      <p>Back on the Song Vault, tap <b>Mark</b> and your PRO's name (and <b>Mark MLC</b>) on each song you uploaded. You won't file it twice.</p>
+      <img src="help/vault-rows.png" alt="Song rows with Mark buttons" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">15</span>Send a song to your admin</h3>
+      <p>Open Export &amp; Submit, scroll to <b>Email Admin</b>, pick the song and tap <b>Email Admin</b>. Your email app opens with everything filled in. Tap Send there.</p>
+      <img src="help/export-admin.png" alt="The Email Admin box" loading="lazy">
+      <p class="tip">Your admin's name and email go in Settings under My Default Info.</p>
+    </article>
+    <article class="step">
+      <h3><span class="num">16</span>Mark it sent to your admin</h3>
+      <p>Back on the Song Vault, tap <b>Mark Admin</b> on that song. It also marks your PRO and MLC as done.</p>
+      <img src="help/vault-rows.png" alt="Song rows with Mark Admin" loading="lazy">
+      
+    </article>
+    </div>
+  </section>
+  <section id="everyday">
+    <h2>Everyday things</h2>
+    <div class="steps">
+    <article class="step">
+      <h3><span class="num">17</span>Read a song at a glance</h3>
+      <p><b>Blue</b> means done. <b>Red</b> means still to do. The line under the title tells you the next step, like "Waiting on 1 co-writer" or "Needs MLC filing".</p>
+      <img src="help/vault-rows.png" alt="Song rows showing blue and red status" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">18</span>Find a song</h3>
+      <p>Type in the search box at the top of the Song Vault. It looks at titles, writers, publishers and more.</p>
+      <img src="help/vault-top.png" alt="The search box" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">19</span>Switch writers</h3>
+      <p>Use the name box at the top to switch who you're working as. Tap <b>+</b> to add a writer. Tap <b>Manage</b> to turn one off.</p>
+      <img src="help/header.png" alt="The writer picker at the top" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">20</span>Copy a song</h3>
+      <p>Tap <b>Duplicate</b> on a song, type a new title, and you have a copy with the same writers. Nothing marked as filed carries over.</p>
+      <img src="help/vault-rows.png" alt="The Duplicate button on a song" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">21</span>Not seeing something new?</h3>
+      <p>Tap <b>Reload</b> at the top of the Song Vault.</p>
+      <img src="help/vault-top.png" alt="The Reload button" loading="lazy">
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">22</span>Back up your songs</h3>
+      <p>Open <b>Settings</b>, scroll to <b>Vault Backup</b> and tap <b>Export vault backup</b>. A backup file saves to your Downloads.</p>
+      
+      
+    </article>
+    <article class="step">
+      <h3><span class="num">23</span>Free or Unlimited</h3>
+      <p>Free holds 5 songs. Unlimited is $4.99 a month with no limit. Tap <b>Plans</b> in the menu to switch. You can cancel any time.</p>
+      <img src="help/menu.png" alt="The Plans item in the menu" loading="lazy">
+      
+    </article>
+    </div>
   </section>
 
   <p class="help">For any questions, email <a href="mailto:MasterBusMDM@gmail.com">MasterBusMDM@gmail.com</a></p>
 </div>
-
 </body>
 </html>
